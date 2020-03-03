@@ -1,0 +1,28 @@
+<idea-plugin>
+    <id>tia.test.intellij-test-plugin</id>
+    <name>TIA TestPlugin</name>
+    <vendor email="support@example.com" url="http://www.example.com">TIA Home</vendor>
+
+    <description><![CDATA[
+    A description.
+    <em>HTML tags may be used</em>
+    <b>min length is 40</b>
+    ]]></description>
+
+    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+         on how to target different products -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends>com.intellij.modules.xml</depends>
+    <depends>com.intellij.modules.java</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <psi.referenceContributor language="XML"
+                                  implementation="org.mule.tooling.runtime.reference.MuleConfigurationReferenceContributor"/>
+        <!--<renamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.rename.RenamePropertyProcessor"/>-->
+    </extensions>
+
+    <actions>
+        <!-- Add your actions here -->
+    </actions>
+</idea-plugin>
