@@ -19,12 +19,14 @@ dependencies {
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
     //version '2019.2.4'
-    version 'IC-2019.1'
-    //plugins = ['properties', 'java']
-    plugins = ['properties']
+    version '2019.2'
+    type 'IC'
+    downloadSources = true
+    plugins = ['properties', 'java']
+    //plugins = ['properties']
 }
 patchPluginXml {
-    sinceBuild 'IC-191'
+    sinceBuild 'IC-192'
     untilBuild null
     changeNotes """
       Add change notes here.<br>
