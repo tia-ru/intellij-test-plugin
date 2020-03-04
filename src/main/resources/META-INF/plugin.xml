@@ -19,7 +19,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <psi.referenceContributor language="XML"
-                                  implementation="org.mule.tooling.runtime.reference.MuleConfigurationReferenceContributor"/>
+                                  implementation="tia.example.tooling.runtime.reference.ConfigXmlPsiReferenceContributor"/>
         <!--<renamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.rename.RenamePropertyProcessor"/>-->
     </extensions>
 
