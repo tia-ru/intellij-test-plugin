@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import tia.example.tooling.runtime.util.ConfigXmlUtils;
 
+import java.util.List;
 import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;
@@ -50,9 +52,17 @@ public class ConfigXmlPsiReference extends PsiReferenceBase<XmlAttributeValue> {
 
         XmlAttributeValue value = getElement();
         Module module = ModuleUtil.findModuleForPsiElement(value);
-        final Set<XmlTag> tags = ConfigXmlUtils.getGlobalTags(toTag, idAttribute, module);
+        final Set<XmlTag> tags = ConfigXmlUtils.getGlobalTags(toTag, module);
 
-        return mapNotNull(tags, domElement -> LookupElementBuilder.create(domElement.getAttributeValue(idAttribute))
-                .withIcon(AllIcons.Nodes.Property)).toArray();
+        List<LookupElementBuilder> lookupElementBuilders = mapNotNull(tags, tag -> {
+            String showName = tag.getAttributeValue(idAttribute);
+            PsiFile file = tag.getContainingFile();
+            String fileName = file.getName();
+            return LookupElementBuilder.create(showName)
+                    .withIcon(AllIcons.Nodes.Property)
+                    .withTailText(" (" + fileName + ')')
+                    .withPsiElement(tag);
+        });
+        return lookupElementBuilders.toArray();
     }
 }

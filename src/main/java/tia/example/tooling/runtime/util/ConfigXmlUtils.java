@@ -20,6 +20,8 @@ import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.DomService;
+import com.intellij.util.xml.XmlFileHeader;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +38,10 @@ public final class ConfigXmlUtils {
 
 
     public static final String NS_AF5_CONFIG = "https://cm5.intertrust.ru/config";
+    public static final String NS_AF5_ACTION = "https://cm5.intertrust.ru/config/action";
+    public static final String NS_AF5_EVENT = "https://cm5.intertrust.ru/config/event";
+    public static final String NS_AF5_RULES = "https://cm5.intertrust.ru/config/rules";
+    public static final String NS_AF5_MODULE = "https://cm5.intertrust.ru/config/module";
 
     public static final String TAG_AF5_CONFIG_ROOT = "configuration";
     public static final String TAG_DOP = "domain-object-type";
@@ -45,7 +51,7 @@ public final class ConfigXmlUtils {
     public static final String ATTRIBUTE_NAME = "name";
     public static final String ATTRIBUTE_TYPE = "type";
     public static final String ATTRIBUTE_EXTENDS = "extends";
-    public static final String ATTRIBUTE_INCLUDE_GROUP = "include-group";
+    public static final String TAG_INCLUDE_GROUP = "include-group";
 
 
     public static boolean isAF5ConfigFile(PsiFile psiFile) {
@@ -56,15 +62,110 @@ public final class ConfigXmlUtils {
             return false;
         }
         final XmlFile xmlFile = (XmlFile) psiFile;
+        XmlFileHeader header = DomService.getInstance().getXmlFileHeader(xmlFile);
+        if (header != null && ConfigXmlUtils.NS_AF5_CONFIG.equals(header.getRootTagNamespace())) {
+            return true;
+        }
         final XmlTag rootTag = xmlFile.getRootTag();
         return isAF5ConfigRootTag(rootTag);
     }
 
 
     public static boolean isAF5ConfigRootTag(XmlTag rootTag) {
-        return rootTag.getLocalName().equalsIgnoreCase(TAG_AF5_CONFIG_ROOT);
+        return rootTag.getLocalName().equals(TAG_AF5_CONFIG_ROOT);
     }
 
+    public static Set<XmlTag> getGlobalTags(String tagName, @Nullable Module module) {
+        Project project = module.getProject();
+        GlobalSearchScope scope;
+        if (module == null) {
+            //inside extrenal library
+            scope = GlobalSearchScope.allScope(project);
+        } else {
+            scope = GlobalSearchScope.moduleWithLibrariesScope(module);
+        }
+        scope = GlobalSearchScope.getScopeRestrictedByFileTypes(scope, StdFileTypes.XML);
+        return getGlobalTagsInScope(tagName, scope);
+    }
+
+    @NotNull
+    private static Set<XmlTag> getGlobalTagsInScope(String tagName, GlobalSearchScope searchScope) {
+
+        Project project = searchScope.getProject();
+        Set<XmlTag> result = new HashSet<>(64);
+        final Collection<VirtualFile> files = FileTypeIndex.getFiles(StdFileTypes.XML, searchScope);
+        PsiManager psiManager = PsiManager.getInstance(project);
+        for (VirtualFile file : files) {
+            final PsiFile psiFile = psiManager.findFile(file);
+            if (isAF5ConfigFile(psiFile)) {
+                XmlFile xmlFile = (XmlFile) psiFile;
+                final XmlTag rootElement = xmlFile.getRootTag();
+                final XmlTag[] subTags = rootElement.getSubTags();
+                for (XmlTag subTag : subTags) {
+                    if (tagName.equals(subTag.getLocalName())){
+                        result.add(subTag);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+    @Nullable
+    public static XmlTag findGlobalTag(String id, String tagName, String idAttribute, PsiElement refElement) {
+
+        final Project project = refElement.getProject();
+        //Search first in the local file else we search globally
+        final PsiFile psiFile = refElement.getContainingFile();
+        XmlTag xmlTag = findGlobalTagInFile(id, tagName, idAttribute, psiFile);
+
+        if (xmlTag == null) {
+            Module module = ModuleUtil.findModuleForPsiElement(refElement);
+            GlobalSearchScope scope;
+            if (module == null) {
+                //refElement is inside external library
+                scope = GlobalSearchScope.allScope(project);
+            } else {
+                scope = GlobalSearchScope.moduleWithLibrariesScope(module);
+            }
+            scope = GlobalSearchScope.getScopeRestrictedByFileTypes(scope, StdFileTypes.XML);
+            xmlTag = findGlobalTagInScope(id, tagName, idAttribute, scope);
+        }
+        return xmlTag;
+    }
+    @Nullable
+    private static XmlTag findGlobalTagInScope(String id, String tagName, String idAttribute, GlobalSearchScope searchScope) {
+
+        Project project = searchScope.getProject();
+        final PsiManager psiManager = PsiManager.getInstance(project);
+        final Collection<VirtualFile> files = FileTypeIndex.getFiles(StdFileTypes.XML, searchScope);
+
+        for (VirtualFile file : files) {
+            final PsiFile psiFile = psiManager.findFile(file);
+            XmlTag tag = findGlobalTagInFile(id, tagName, idAttribute, psiFile);
+            if (tag != null) return tag;
+        }
+        return null;
+    }
+
+    @Nullable
+    private static XmlTag findGlobalTagInFile(String id, String tagName, String idAttribute, PsiFile psiFile) {
+
+        if (!isAF5ConfigFile(psiFile)) {
+            return null;
+        }
+        XmlFile xmlFile = (XmlFile) psiFile;
+
+        final XmlTag rootElement = xmlFile.getRootTag();
+        final XmlTag[] subTags = rootElement.getSubTags();
+        for (XmlTag subTag : subTags) {
+            if (id.equals(subTag.getAttributeValue(idAttribute)) && tagName.equals(subTag.getLocalName())) {
+                return subTag;
+            }
+        }
+        return null;
+    }
+
+    //=================================================================================================================
 
     public static QName getQName(XmlTag xmlTag) {
         return new QName(xmlTag.getNamespace(), xmlTag.getLocalName());
@@ -165,99 +266,6 @@ public final class ConfigXmlUtils {
         final int offset = tag.getTextOffset();
         final Document document = FileDocumentManager.getInstance().getDocument(file);
         return offset < document.getTextLength() ? document.getLineNumber(offset) : -1;
-    }
-
-// ===================================================================================================
-
-    public static Set<XmlTag> getGlobalTags(String tagName, String idAttribute, @Nullable Module module) {
-        Project project = module.getProject();
-        GlobalSearchScope scope;
-        if (module == null) {
-            //inside extrenal library
-            scope = GlobalSearchScope.allScope(project);
-        } else {
-            scope = GlobalSearchScope.moduleWithLibrariesScope(module);
-        }
-        scope = GlobalSearchScope.getScopeRestrictedByFileTypes(scope, StdFileTypes.XML);
-        return getGlobalTagsInScope(tagName, scope);
-    }
-
-    @NotNull
-    private static Set<XmlTag> getGlobalTagsInScope(String tagName, GlobalSearchScope searchScope) {
-
-        Project project = searchScope.getProject();
-        Set<XmlTag> result = new HashSet<>(64);
-        final Collection<VirtualFile> files = FileTypeIndex.getFiles(StdFileTypes.XML, searchScope);
-        PsiManager psiManager = PsiManager.getInstance(project);
-        for (VirtualFile file : files) {
-            final PsiFile psiFile = psiManager.findFile(file);
-            if (isAF5ConfigFile(psiFile)) {
-                XmlFile xmlFile = (XmlFile) psiFile;
-                final XmlTag rootElement = xmlFile.getRootTag();
-                final XmlTag[] subTags = rootElement.getSubTags();
-                for (XmlTag subTag : subTags) {
-                    if (tagName.equals(subTag.getName())){
-                        result.add(subTag);
-                    }
-                }
-            }
-        }
-        return result;
-    }
-    @Nullable
-    public static XmlTag findGlobalTag(String id, String tagName, String idAttribute, PsiElement refElement) {
-
-        final Project project = refElement.getProject();
-        //Search first in the local file else we search globally
-        final PsiFile psiFile = refElement.getContainingFile();
-        XmlTag xmlTag = findGlobalTagInFile(id, tagName, idAttribute, psiFile);
-
-        if (xmlTag == null) {
-            Module module = ModuleUtil.findModuleForPsiElement(refElement);
-            GlobalSearchScope scope;
-            if (module == null) {
-                //refElement is inside external library
-                scope = GlobalSearchScope.allScope(project);
-            } else {
-                scope = GlobalSearchScope.moduleWithLibrariesScope(module);
-            }
-            scope = GlobalSearchScope.getScopeRestrictedByFileTypes(scope, StdFileTypes.XML);
-            xmlTag = findGlobalTagInScope(id, tagName, idAttribute, scope);
-        }
-        return xmlTag;
-    }
-    @Nullable
-    private static XmlTag findGlobalTagInScope(String id, String tagName, String idAttribute, GlobalSearchScope searchScope) {
-
-        Project project = searchScope.getProject();
-        final PsiManager psiManager = PsiManager.getInstance(project);
-        final Collection<VirtualFile> files = FileTypeIndex.getFiles(StdFileTypes.XML, searchScope);
-
-        for (VirtualFile file : files) {
-            final PsiFile psiFile = psiManager.findFile(file);
-            XmlTag tag = findGlobalTagInFile(id, tagName, idAttribute, psiFile);
-            if (tag != null) return tag;
-        }
-        return null;
-    }
-
-    @Nullable
-    private static XmlTag findGlobalTagInFile(String id, String tagName, String idAttribute, PsiFile psiFile) {
-
-        if (!isAF5ConfigFile(psiFile)) {
-            return null;
-        }
-        XmlFile xmlFile = (XmlFile) psiFile;
-
-        final XmlTag rootElement = xmlFile.getRootTag();
-        final XmlTag[] subTags = rootElement.getSubTags();
-        for (XmlTag subTag : subTags) {
-            if (id.equals(subTag.getAttributeValue(idAttribute)) && tagName.equals(subTag.getName())) {
-                return subTag;
-            }
-        }
-
-        return null;
     }
 
 }

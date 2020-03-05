@@ -21,6 +21,12 @@
         <psi.referenceContributor language="XML"
                                   implementation="tia.example.tooling.runtime.reference.ConfigXmlPsiReferenceContributor"/>
         <!--<renamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.rename.RenamePropertyProcessor"/>-->
+
+
+        <!--<fileTypeDetector implementation="tia.example.tooling.runtime.fileTypes.ConfigXmlFileTypeDetector" />-->
+
+        <!--<dom.fileMetaData rootTagName="configuration"
+                          implementation="tia.example.tooling.runtime.fileTypes.ConfigXmlDomFileDescription" />-->
     </extensions>
 
     <actions>
