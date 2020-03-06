@@ -1,17 +1,20 @@
 package tia.example.tooling.runtime.reference;
 
+import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.NotNull;
 
+/**
+ * Provides reference target resolver for xml-attributes found by matchers defined in {@code ConfigXmlPsiReferenceContributor}.
+ */
 class ConfigXmlPsiReferenceProvider extends PsiReferenceProvider {
     private final String toTag;
     private final String idAttribute;
 
-    public ConfigXmlPsiReferenceProvider(String toTag, String idAttribute) {
+    ConfigXmlPsiReferenceProvider(String toTag, String idAttribute) {
         this.toTag = toTag;
         this.idAttribute = idAttribute;
     }

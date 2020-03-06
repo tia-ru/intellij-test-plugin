@@ -1,5 +1,11 @@
 package tia.example.tooling.runtime.util;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.xml.namespace.QName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -24,17 +30,10 @@ import com.intellij.util.xml.DomService;
 import com.intellij.util.xml.XmlFileHeader;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.xml.namespace.QName;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 public final class ConfigXmlUtils {
 
-    private ConfigXmlUtils(){};
+    private ConfigXmlUtils(){}
 
 
     public static final String NS_AF5_CONFIG = "https://cm5.intertrust.ru/config";
@@ -58,7 +57,7 @@ public final class ConfigXmlUtils {
         if (!(psiFile instanceof XmlFile)) {
             return false;
         }
-        if (psiFile.getFileType() != StdFileTypes.XML || psiFile.getVirtualFile().getExtension().equalsIgnoreCase("xsd")) {
+        if (!StdFileTypes.XML.equals(psiFile.getFileType()) || "xsd".equalsIgnoreCase(psiFile.getVirtualFile().getExtension())) {
             return false;
         }
         final XmlFile xmlFile = (XmlFile) psiFile;
@@ -67,28 +66,33 @@ public final class ConfigXmlUtils {
             return true;
         }
         final XmlTag rootTag = xmlFile.getRootTag();
+        if (rootTag == null) return false;
+        
         return isAF5ConfigRootTag(rootTag);
     }
 
 
-    public static boolean isAF5ConfigRootTag(XmlTag rootTag) {
-        return rootTag.getLocalName().equals(TAG_AF5_CONFIG_ROOT);
+    public static boolean isAF5ConfigRootTag(@Nonnull XmlTag rootTag) {
+        return TAG_AF5_CONFIG_ROOT.equals(rootTag.getLocalName());
     }
 
-    public static Set<XmlTag> getGlobalTags(String tagName, @Nullable Module module) {
-        Project project = module.getProject();
-        GlobalSearchScope scope;
-        if (module == null) {
-            //inside extrenal library
-            scope = GlobalSearchScope.allScope(project);
-        } else {
-            scope = GlobalSearchScope.moduleWithLibrariesScope(module);
-        }
+    public static Set<XmlTag> getGlobalTags(String tagName, @Nonnull Module module) {
+
+        GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(module);
         scope = GlobalSearchScope.getScopeRestrictedByFileTypes(scope, StdFileTypes.XML);
-        return getGlobalTagsInScope(tagName, scope);
+        Set<XmlTag> tags = getGlobalTagsInScope(tagName, scope);
+        return tags;
+
+    }
+    public static Set<XmlTag> getGlobalTags(String tagName, @Nonnull Project project) {
+        GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+        scope = GlobalSearchScope.getScopeRestrictedByFileTypes(scope, StdFileTypes.XML);
+        Set<XmlTag> tags = getGlobalTagsInScope(tagName, scope);
+        return tags;
+
     }
 
-    @NotNull
+    @Nonnull
     private static Set<XmlTag> getGlobalTagsInScope(String tagName, GlobalSearchScope searchScope) {
 
         Project project = searchScope.getProject();
@@ -110,6 +114,7 @@ public final class ConfigXmlUtils {
         }
         return result;
     }
+
     @Nullable
     public static XmlTag findGlobalTag(String id, String tagName, String idAttribute, PsiElement refElement) {
 
@@ -156,6 +161,7 @@ public final class ConfigXmlUtils {
         XmlFile xmlFile = (XmlFile) psiFile;
 
         final XmlTag rootElement = xmlFile.getRootTag();
+        if (rootElement == null) return null;
         final XmlTag[] subTags = rootElement.getSubTags();
         for (XmlTag subTag : subTags) {
             if (id.equals(subTag.getAttributeValue(idAttribute)) && tagName.equals(subTag.getLocalName())) {
@@ -164,6 +170,9 @@ public final class ConfigXmlUtils {
         }
         return null;
     }
+
+
+
 
     //=================================================================================================================
 
@@ -213,15 +222,15 @@ public final class ConfigXmlUtils {
                 return getDelegate().getOffset();
             }
 
-            @NotNull
+            @Nonnull
             @Override
             public VirtualFile getFile() {
                 return file;
             }
 
-            @NotNull
+            @Nonnull
             @Override
-            public Navigatable createNavigatable(@NotNull Project project) {
+            public Navigatable createNavigatable(@Nonnull Project project) {
                 // no need to create delegate here, it may be expensive
                 if (myDelegate != null) {
                     return myDelegate.createNavigatable(project);

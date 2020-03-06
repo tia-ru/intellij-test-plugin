@@ -1,2 +1,11 @@
 # Default ignored files
-/workspace.xml
+/*
+
+!vcs.xml
+!/intellij-test-plugin.iml
+!/encodings.xml
+!/compiler.xml
+!/gradle.xml
+
+!/runConfigurations/
+!/inspectionProfiles/

@@ -1,9 +1,9 @@
 package tia.example.tooling.runtime.reference;
 
+import org.jetbrains.annotations.NotNull;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
-import org.jetbrains.annotations.NotNull;
 
 import static tia.example.tooling.runtime.util.ConfigXmlUtils.ATTRIBUTE_EXTENDS;
 import static tia.example.tooling.runtime.util.ConfigXmlUtils.ATTRIBUTE_NAME;
@@ -15,12 +15,15 @@ import static tia.example.tooling.runtime.util.ConfigXmlUtils.TAG_FIELD_GROUP;
 import static tia.example.tooling.runtime.util.ConfigXmlUtils.TAG_INCLUDE_GROUP;
 import static tia.example.tooling.runtime.util.ConfigXmlUtils.TAG_REF;
 
+/**
+ * Register IntelliJ's reference providers for AF5 config reference xml-attributes.
+ * It enables navigation actions 'Declaration or Usage', 'Find usage' and `rename` refactoring.
+ * <p/>
+ * Declarations (reference target tags) has to has self reference to enable 'find usage' action and `rename` refactoring within them.
+ */
 public class ConfigXmlPsiReferenceContributor extends PsiReferenceContributor {
 
-    /**
-     * Referencable tags has to has self reference to enable 'find usage' action and `rename` refactoring.
-     * @param registrar
-     */
+
     @Override
     public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
 

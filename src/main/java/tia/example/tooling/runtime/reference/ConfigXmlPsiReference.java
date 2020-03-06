@@ -1,5 +1,9 @@
 package tia.example.tooling.runtime.reference;
 
+import java.util.List;
+import java.util.Set;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.Module;
@@ -10,21 +14,20 @@ import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import tia.example.tooling.runtime.util.ConfigXmlUtils;
 
-import java.util.List;
-import java.util.Set;
+import tia.example.tooling.runtime.util.ConfigXmlUtils;
 
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
-public class ConfigXmlPsiReference extends PsiReferenceBase<XmlAttributeValue> {
+/**
+   Search for reference target
+ */
+class ConfigXmlPsiReference extends PsiReferenceBase<XmlAttributeValue> {
 
     private final String toTag;
     private final String idAttribute;
 
-    public ConfigXmlPsiReference(@NotNull XmlAttributeValue ref, String toTag, String idAttribute) {
+    ConfigXmlPsiReference(@NotNull XmlAttributeValue ref, String toTag, String idAttribute) {
         super(ref);
         this.toTag = toTag;
         this.idAttribute = idAttribute;
@@ -52,7 +55,14 @@ public class ConfigXmlPsiReference extends PsiReferenceBase<XmlAttributeValue> {
 
         XmlAttributeValue value = getElement();
         Module module = ModuleUtil.findModuleForPsiElement(value);
-        final Set<XmlTag> tags = ConfigXmlUtils.getGlobalTags(toTag, module);
+
+        final Set<XmlTag> tags;
+        if (module == null){
+            //inside external library
+            tags = ConfigXmlUtils.getGlobalTags(toTag, value.getProject());
+        } else {
+            tags = ConfigXmlUtils.getGlobalTags(toTag, module);
+        }
 
         List<LookupElementBuilder> lookupElementBuilders = mapNotNull(tags, tag -> {
             String showName = tag.getAttributeValue(idAttribute);
