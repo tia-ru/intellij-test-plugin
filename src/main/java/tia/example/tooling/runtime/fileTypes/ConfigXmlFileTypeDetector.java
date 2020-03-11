@@ -23,7 +23,7 @@ public class ConfigXmlFileTypeDetector implements FileTypeRegistry.FileTypeDetec
 
     @Override
     public int getVersion() {
-        return 0;
+        return 1;
     }
 
     @Nullable
@@ -31,4 +31,6 @@ public class ConfigXmlFileTypeDetector implements FileTypeRegistry.FileTypeDetec
     public Collection<? extends FileType> getDetectedFileTypes() {
         return Collections.singleton(ConfigXmlFileType.INSTANCE);
     }
+
+
 }

@@ -23,7 +23,8 @@
         <!--<renamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.rename.RenamePropertyProcessor"/>-->
 
 
-        <!--<fileTypeDetector implementation="tia.example.tooling.runtime.fileTypes.ConfigXmlFileTypeDetector" />-->
+        <fileTypeDetector implementation="tia.example.tooling.runtime.fileTypes.ConfigXmlFileTypeDetector" />
+        <fileType name="AF5 Config" implementationClass="tia.example.tooling.runtime.fileTypes.ConfigXmlFileType" fieldName="INSTANCE" language="af5-config"/>
 
         <!--<dom.fileMetaData rootTagName="configuration"
                           implementation="tia.example.tooling.runtime.fileTypes.ConfigXmlDomFileDescription" />-->

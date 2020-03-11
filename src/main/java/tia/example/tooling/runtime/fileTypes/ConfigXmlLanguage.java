@@ -8,5 +8,6 @@ public class ConfigXmlLanguage extends XMLLanguage {
 
     public ConfigXmlLanguage(){
        super(XMLLanguage.INSTANCE, "af5-config", "application/xml", "text/xml");
+
     }
 }

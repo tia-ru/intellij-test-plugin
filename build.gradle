@@ -23,8 +23,13 @@ intellij {
     type 'IC'
     downloadSources = true
     plugins = ['properties', 'java']
-    //plugins = ['properties']
+
+    runIde{
+        jvmArgs '--add-exports=java.base/jdk.internal.vm=ALL-UNNAMED'
+    }
 }
+
+
 patchPluginXml {
     sinceBuild 'IC-192'
     untilBuild null
