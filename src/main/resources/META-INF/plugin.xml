@@ -1,12 +1,18 @@
 <idea-plugin>
-    <id>tia.test.intellij-test-plugin</id>
-    <name>TIA Test</name>
-    <vendor email="support@example.com" url="http://www.example.com">TIA Home</vendor>
+    <id>tia.test.af5-intellij</id>
+    <name>AF5</name>
+    <vendor email="support@example.com" url="http://www.example.com">Tugushev Ilya</vendor>
 
     <description><![CDATA[
-    A description.
-    <em>HTML tags may be used</em>
-    <b>min length is 40</b>
+    Базовая поддержка конфигурационных xml-файлов платформы AF5 в IntelliJ.
+    <p><ul>
+    <li>подсказки значений для ссылочных атрибутов (\<reference type> \<include-group name>)
+    <li>переход к декларации по ссылке (Ctrl + B)
+    <li>поиск ссылок на декларации (Alt + F7)
+    <li>переименование имени типа во всех ссылках (Shift + F6)
+    <li>предпросмотр декларации (Ctrl + Shit + I)
+    </ul>
+    Конфигурации UI-элементов реализованы частично.
     ]]></description>
 
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
@@ -15,16 +21,15 @@
     <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.modules.xml</depends>
     <depends>com.intellij.modules.vcs</depends>
-    <depends>com.intellij.java</depends>
+    <!--<depends>com.intellij.java</depends>-->
 
     <extensions defaultExtensionNs="com.intellij">
         <psi.referenceContributor language="XML"
                                   implementation="tia.example.tooling.runtime.reference.ConfigXmlPsiReferenceContributor"/>
         <!--<renamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.rename.RenamePropertyProcessor"/>-->
 
-
-        <fileTypeDetector implementation="tia.example.tooling.runtime.fileTypes.ConfigXmlFileTypeDetector" />
-        <fileType name="AF5 Config" implementationClass="tia.example.tooling.runtime.fileTypes.ConfigXmlFileType" fieldName="INSTANCE" language="af5-config"/>
+        <!--<fileTypeDetector implementation="tia.example.tooling.runtime.fileTypes.ConfigXmlFileTypeDetector" />
+        <fileType name="AF5 Config" implementationClass="tia.example.tooling.runtime.fileTypes.ConfigXmlFileType" fieldName="INSTANCE" language="af5-config"/>-->
 
         <!--<dom.fileMetaData rootTagName="configuration"
                           implementation="tia.example.tooling.runtime.fileTypes.ConfigXmlDomFileDescription" />-->

@@ -43,6 +43,11 @@ public class ConfigXmlPsiReferenceContributor extends PsiReferenceContributor {
         // Self reference.
         addRef("collection", ATTRIBUTE_NAME, "collection", ATTRIBUTE_NAME, registrar);
 
+        //<attachment-type storage="SOPersonFiles" />  --> <attachment-storage name = "SOPersonFiles">
+        addRef("attachment-type", "storage", "attachment-storage", ATTRIBUTE_NAME, registrar);
+        // Self reference.
+        addRef("attachment-storage", ATTRIBUTE_NAME, "attachment-storage", ATTRIBUTE_NAME, registrar);
+
         // UI ===============================================================================================
         addRef("form", "domain-object-type", "domain-object-type", ATTRIBUTE_NAME, registrar);
         addRef("form", ATTRIBUTE_NAME, "form", ATTRIBUTE_NAME, registrar);
