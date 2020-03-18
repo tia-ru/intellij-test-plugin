@@ -26,10 +26,18 @@
     <extensions defaultExtensionNs="com.intellij">
         <psi.referenceContributor language="XML"
                                   implementation="tia.example.tooling.runtime.reference.ConfigXmlPsiReferenceContributor"/>
-        <!--<renamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.rename.RenamePropertyProcessor"/>-->
+        <psi.referenceContributor language="JAVA"
+                                  implementation="tia.example.tooling.runtime.reference.JavaPsiReferenceContributor"/>
 
         <!--<fileTypeDetector implementation="tia.example.tooling.runtime.fileTypes.ConfigXmlFileTypeDetector" />
         <fileType name="AF5 Config" implementationClass="tia.example.tooling.runtime.fileTypes.ConfigXmlFileType" fieldName="INSTANCE" language="af5-config"/>-->
+
+        <implicitUsageProvider implementation="tia.example.tooling.runtime.usage.Af5ImplicitUsageProvider" />
+
+        <!--<xml.implicitIdRefProvider implementation="" />-->
+
+        <!--<renamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.rename.RenamePropertyProcessor"/>-->
+
 
         <!--<dom.fileMetaData rootTagName="configuration"
                           implementation="tia.example.tooling.runtime.fileTypes.ConfigXmlDomFileDescription" />-->

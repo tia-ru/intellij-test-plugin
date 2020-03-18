@@ -1,11 +1,5 @@
 package tia.example.tooling.runtime.util;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.xml.namespace.QName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -31,6 +25,13 @@ import com.intellij.util.xml.XmlFileHeader;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.xml.namespace.QName;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
 public final class ConfigXmlUtils {
 
     private ConfigXmlUtils(){}
@@ -46,11 +47,12 @@ public final class ConfigXmlUtils {
     public static final String TAG_DOP = "domain-object-type";
     public static final String TAG_REF = "reference";
     public static final String TAG_FIELD_GROUP = "field-group";
+    public static final String TAG_INCLUDE_GROUP = "include-group";
 
     public static final String ATTRIBUTE_NAME = "name";
     public static final String ATTRIBUTE_TYPE = "type";
     public static final String ATTRIBUTE_EXTENDS = "extends";
-    public static final String TAG_INCLUDE_GROUP = "include-group";
+
 
 
     public static boolean isAF5ConfigFile(PsiFile psiFile) {
