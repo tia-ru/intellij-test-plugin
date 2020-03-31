@@ -66,8 +66,9 @@ public abstract class XmlAttributeReferenceBase<T extends PsiElement> extends Ps
             PsiFile file = tag.getContainingFile();
             String fileName = file.getName();
             return LookupElementBuilder.create(showName)
-                    .withIcon(AllIcons.Nodes.Property)
-                    .withTailText(" (" + fileName + ')')
+                    .withIcon(AllIcons.Nodes.Tag)
+                    //.withTailText(" (" + fileName + ')')
+                    .withTypeText(" (" + fileName + ')', true)
                     .withPsiElement(tag);
         });
         return lookupElementBuilders.toArray();

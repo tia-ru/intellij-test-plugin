@@ -34,6 +34,7 @@
 
         <implicitUsageProvider implementation="tia.example.tooling.runtime.usage.Af5ImplicitUsageProvider" />
 
+        <fileTemplateGroup implementation="tia.example.tooling.runtime.templates.Af5FilesTemplateManager"/>
         <!--<xml.implicitIdRefProvider implementation="" />-->
 
         <!--<renamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.rename.RenamePropertyProcessor"/>-->
@@ -44,6 +45,17 @@
     </extensions>
 
     <actions>
-        <!-- Add your actions here -->
+        <action id="tia.example.tooling.runtime.actions.CreateModuleFileAction"
+                class="tia.example.tooling.runtime.actions.CreateModuleFileAction" text="AF5 Module"
+                description="Create new AF5 module config">
+            <!--<add-to-group group-id="NewGroup" anchor="first"/> -->
+            <add-to-group group-id="NewXmlDescriptor" anchor="first"/>
+            <!--<keyboard-shortcut keymap="$default" first-keystroke="shift ctrl W"/>-->
+        </action>
+        <action id="tia.example.tooling.runtime.actions.CreateDopFileAction"
+                class="tia.example.tooling.runtime.actions.CreateDopFileAction" text="AF5 Config"
+                description="Create new AF5 config">
+            <add-to-group group-id="NewXmlDescriptor" anchor="first"/>
+        </action>
     </actions>
 </idea-plugin>

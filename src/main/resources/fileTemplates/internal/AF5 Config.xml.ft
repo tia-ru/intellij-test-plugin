@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration xmlns="https://cm5.intertrust.ru/config">
+    <domain-object-type name="">
+        <fields>
+        </fields>
+    </domain-object-type>
+
+    <access-matrix type="">
+    </access-matrix>
+</configuration>

@@ -175,7 +175,6 @@ public final class ConfigXmlUtils {
 
 
 
-
     //=================================================================================================================
 
     public static QName getQName(XmlTag xmlTag) {

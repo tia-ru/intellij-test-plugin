@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="https://cm5.intertrust.ru/config/module">
+    <name></name>
+    <description></description>
+
+    <configuration-paths>
+        <configuration-path></configuration-path>
+    </configuration-paths>
+</module>
