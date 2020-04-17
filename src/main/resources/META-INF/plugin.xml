@@ -4,8 +4,11 @@
     <vendor email="support@example.com" url="http://www.example.com">Tugushev Ilya</vendor>
 
     <description><![CDATA[
-    Базовая поддержка конфигурационных xml-файлов платформы AF5 в IntelliJ.
-    <p><ul>
+     <h2>Неофициальный плагин "IntelliJ IDEA" для поддержки "ActiveFrame 5"</h2>
+     Минимальная версия "IntelliJ IDEA" - 2019.2.
+     <p>
+     Базовая поддержка конфигурационных xml-файлов AF5:
+    <ul>
     <li>подсказки значений для ссылочных атрибутов (\<reference type> \<include-group name>)
     <li>переход к декларации по ссылке (Ctrl + B)
     <li>поиск ссылок на декларации (Alt + F7)
@@ -42,6 +45,8 @@
 
         <!--<dom.fileMetaData rootTagName="configuration"
                           implementation="tia.example.tooling.runtime.fileTypes.ConfigXmlDomFileDescription" />-->
+
+       <!-- <fileDocumentManagerListener implementation="tia.example.tooling.runtime.balloon.DocumentManagerListener"/>-->
     </extensions>
 
     <actions>

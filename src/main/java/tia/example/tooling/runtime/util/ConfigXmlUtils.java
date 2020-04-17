@@ -48,6 +48,8 @@ public final class ConfigXmlUtils {
     public static final String TAG_REF = "reference";
     public static final String TAG_FIELD_GROUP = "field-group";
     public static final String TAG_INCLUDE_GROUP = "include-group";
+    public static final String TAG_CONFIGURATION_PATHS = "configuration-paths";
+    public static final String TAG_CONFIGURATION_PATH = "configuration-path";
 
     public static final String ATTRIBUTE_NAME = "name";
     public static final String ATTRIBUTE_TYPE = "type";
