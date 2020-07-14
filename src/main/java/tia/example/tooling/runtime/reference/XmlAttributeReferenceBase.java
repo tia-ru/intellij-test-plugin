@@ -15,20 +15,27 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import tia.example.tooling.runtime.util.ConfigXmlUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
 public abstract class XmlAttributeReferenceBase<T extends PsiElement> extends PsiReferenceBase<T> {
-    protected final String toTag;
-    protected final String idAttribute;
+
+    protected final List<ConfigXmlAttribute> pathsToAttributes;
 
     public XmlAttributeReferenceBase(T element, String toTag, String idAttribute) {
         super(element);
-        this.toTag = toTag;
-        this.idAttribute = idAttribute;
+        this.pathsToAttributes = new ArrayList<>(1);
+        this.pathsToAttributes.add(new ConfigXmlAttribute(toTag, idAttribute));
     }
+
+    public XmlAttributeReferenceBase(T element, List<ConfigXmlAttribute> pathsToAttributes){
+        super(element);
+        this.pathsToAttributes = new ArrayList<>(pathsToAttributes);
+    }
+
 
     @Nullable
     @Override
@@ -36,10 +43,12 @@ public abstract class XmlAttributeReferenceBase<T extends PsiElement> extends Ps
         final String ref = getRef();
         if (StringUtil.isEmpty(ref)) return null;
 
-        final XmlTag tag = ConfigXmlUtils.findGlobalTag(ref, toTag, idAttribute, myElement);
-        if (tag != null) {
-            final XmlAttribute attribute = tag.getAttribute(idAttribute);
-            if (attribute != null) return attribute.getValueElement();
+        for (ConfigXmlAttribute path : pathsToAttributes) {
+            final XmlTag tag = ConfigXmlUtils.getTag(ref, path.getToTag(), path.getIdAttribute(), myElement);
+            if (tag != null) {
+                final XmlAttribute attribute = tag.getAttribute(path.getIdAttribute());
+                if (attribute != null) return attribute.getValueElement();
+            }
         }
         return null;
     }
@@ -53,24 +62,32 @@ public abstract class XmlAttributeReferenceBase<T extends PsiElement> extends Ps
         T value = getElement();
         Module module = ModuleUtil.findModuleForPsiElement(value);
 
-        final Set<XmlTag> tags;
-        if (module == null){
-            //inside external library
-            tags = ConfigXmlUtils.getGlobalTags(toTag, value.getProject());
-        } else {
-            tags = ConfigXmlUtils.getGlobalTags(toTag, module);
+        List<LookupElementBuilder> lookupElementBuilders = new ArrayList<>(512);
+        for (ConfigXmlAttribute attributeRef : pathsToAttributes) {
+            final Set<XmlTag> tags;
+            if (module == null){
+                //inside external library
+                tags = ConfigXmlUtils.findTags(attributeRef.getToTag(), value.getProject());
+            } else {
+                tags = ConfigXmlUtils.findTags(attributeRef.getToTag(), module);
+            }
+
+            List<LookupElementBuilder> leb = mapNotNull(tags, tag -> {
+                String showName = tag.getAttributeValue(attributeRef.getIdAttribute());
+                if (showName == null) return null;
+                PsiFile file = tag.getContainingFile();
+                String fileName = file.getName();
+                return LookupElementBuilder.create(showName)
+                        .withIcon(AllIcons.Nodes.Tag)
+                        //.withTailText(" (" + fileName + ')')
+                        .withTypeText(" (" + fileName + ')', true)
+                        .withPsiElement(tag);
+            });
+            lookupElementBuilders.addAll(leb);
         }
 
-        List<LookupElementBuilder> lookupElementBuilders = mapNotNull(tags, tag -> {
-            String showName = tag.getAttributeValue(idAttribute);
-            PsiFile file = tag.getContainingFile();
-            String fileName = file.getName();
-            return LookupElementBuilder.create(showName)
-                    .withIcon(AllIcons.Nodes.Tag)
-                    //.withTailText(" (" + fileName + ')')
-                    .withTypeText(" (" + fileName + ')', true)
-                    .withPsiElement(tag);
-        });
+
         return lookupElementBuilders.toArray();
     }
+
 }

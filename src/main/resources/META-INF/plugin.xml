@@ -9,11 +9,11 @@
      <p>
      Базовая поддержка конфигурационных xml-файлов AF5:
     <ul>
-    <li>подсказки значений для ссылочных атрибутов (\<reference type> \<include-group name>)
-    <li>переход к декларации по ссылке (Ctrl + B)
-    <li>поиск ссылок на декларации (Alt + F7)
-    <li>переименование имени типа во всех ссылках (Shift + F6)
-    <li>предпросмотр декларации (Ctrl + Shit + I)
+    <li>Подсказки значений для ссылочных атрибутов (\<reference type> \<include-group name>)
+    <li>Переход к декларации по ссылке (Ctrl + B)
+    <li>Поиск ссылок на декларации (Alt + F7)
+    <li>Переименование имени типа во всех ссылках (Shift + F6)
+    <li>Предпросмотр декларации (Ctrl + Shit + I)
     </ul>
     Конфигурации UI-элементов реализованы частично.
     ]]></description>
@@ -24,7 +24,7 @@
     <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.modules.xml</depends>
     <depends>com.intellij.modules.vcs</depends>
-    <!--<depends>com.intellij.java</depends>-->
+    <depends>com.intellij.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <psi.referenceContributor language="XML"
