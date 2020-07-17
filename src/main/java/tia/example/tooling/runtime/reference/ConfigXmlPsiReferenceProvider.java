@@ -14,15 +14,17 @@ import java.util.List;
  */
 class ConfigXmlPsiReferenceProvider extends PsiReferenceProvider {
 
-    private final List<ConfigXmlAttribute> pathsToAttributes;
+    private final List<XmlIdPath> pathsToAttributes;
+    private final XmlIdCache cache;
 
 /*    ConfigXmlPsiReferenceProvider(String toTag, String idAttribute) {
         this.toAttributes = new ArrayList<>(1);
         this.toAttributes.add(new XmlAttributeReferenceBase.XmlAttributeRef(toTag, idAttribute));
     }*/
 
-    ConfigXmlPsiReferenceProvider(List<ConfigXmlAttribute> pathsToAttributes) {
+    ConfigXmlPsiReferenceProvider(List<XmlIdPath> pathsToAttributes, XmlIdCache cache) {
         this.pathsToAttributes = pathsToAttributes;
+        this.cache = cache;
     }
 
     @NotNull
@@ -31,7 +33,7 @@ class ConfigXmlPsiReferenceProvider extends PsiReferenceProvider {
         if (element instanceof XmlAttributeValue) {
             final XmlAttributeValue ref = (XmlAttributeValue) element;
             return new PsiReference[]{
-                    new ConfigXmlPsiReference(ref, pathsToAttributes)
+                    new ConfigXmlPsiReference(ref, pathsToAttributes, cache)
                     };
         }
         return PsiReference.EMPTY_ARRAY;

@@ -10,8 +10,8 @@ import java.util.List;
  */
 class ConfigXmlPsiReference extends XmlAttributeReferenceBase<XmlAttributeValue> {
 
-    public ConfigXmlPsiReference(@NotNull XmlAttributeValue ref, List<ConfigXmlAttribute> pathsToAttributes){
-        super(ref, pathsToAttributes);
+    public ConfigXmlPsiReference(@NotNull XmlAttributeValue ref, List<XmlIdPath> pathsToAttributes, XmlIdCache cache){
+        super(ref, pathsToAttributes, cache);
     }
 
     @Override

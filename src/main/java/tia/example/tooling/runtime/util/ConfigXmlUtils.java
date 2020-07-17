@@ -264,10 +264,10 @@ public final class ConfigXmlUtils {
         final VirtualFile file = sourcePosition.getFile();
         final XmlFile xmlFile = (XmlFile) PsiManager.getInstance(project).findFile(file);
         final XmlTag rootTag = xmlFile.getRootTag();
-        return findXmlTag(sourcePosition, rootTag);
+        return getXmlTagAtPosition(sourcePosition, rootTag);
     }
 
-    private static XmlTag findXmlTag(XSourcePosition sourcePosition, XmlTag rootTag) {
+    private static XmlTag getXmlTagAtPosition(XSourcePosition sourcePosition, XmlTag rootTag) {
         final XmlTag[] subTags = rootTag.getSubTags();
         for (int i = 0; i < subTags.length; i++) {
             XmlTag subTag = subTags[i];
@@ -275,12 +275,12 @@ public final class ConfigXmlUtils {
             if (subTagLineNumber == sourcePosition.getLine()) {
                 return subTag;
             } else if (subTagLineNumber > sourcePosition.getLine() && i > 0 && subTags[i - 1].getSubTags().length > 0) {
-                return findXmlTag(sourcePosition, subTags[i - 1]);
+                return getXmlTagAtPosition(sourcePosition, subTags[i - 1]);
             }
         }
         if (subTags.length > 0) {
             final XmlTag lastElement = subTags[subTags.length - 1];
-            return findXmlTag(sourcePosition, lastElement);
+            return getXmlTagAtPosition(sourcePosition, lastElement);
         } else {
             return null;
         }

@@ -13,7 +13,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import tia.example.tooling.runtime.util.ConfigXmlUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,17 +22,20 @@ import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
 public abstract class XmlAttributeReferenceBase<T extends PsiElement> extends PsiReferenceBase<T> {
 
-    protected final List<ConfigXmlAttribute> pathsToAttributes;
+    protected final List<XmlIdPath> pathsToAttributes;
+    private final XmlIdCache cache;
 
-    public XmlAttributeReferenceBase(T element, String toTag, String idAttribute) {
+    public XmlAttributeReferenceBase(T element, String namespace, String toTag, String idAttribute, XmlIdCache cache) {
         super(element);
+        this.cache = cache;
         this.pathsToAttributes = new ArrayList<>(1);
-        this.pathsToAttributes.add(new ConfigXmlAttribute(toTag, idAttribute));
+        this.pathsToAttributes.add(new XmlIdPath(namespace, toTag, idAttribute));
     }
 
-    public XmlAttributeReferenceBase(T element, List<ConfigXmlAttribute> pathsToAttributes){
+    public XmlAttributeReferenceBase(T element, List<XmlIdPath> pathsToAttributes, XmlIdCache cache){
         super(element);
         this.pathsToAttributes = new ArrayList<>(pathsToAttributes);
+        this.cache = cache;
     }
 
 
@@ -43,8 +45,10 @@ public abstract class XmlAttributeReferenceBase<T extends PsiElement> extends Ps
         final String ref = getRef();
         if (StringUtil.isEmpty(ref)) return null;
 
-        for (ConfigXmlAttribute path : pathsToAttributes) {
-            final XmlTag tag = ConfigXmlUtils.getTag(ref, path.getToTag(), path.getIdAttribute(), myElement);
+        for (XmlIdPath path : pathsToAttributes) {
+
+            //final XmlTag tag = ConfigXmlUtils.getTag(ref, path.getToTag(), path.getIdAttribute(), myElement);
+            final XmlTag tag = cache.getTag(ref, path, myElement);
             if (tag != null) {
                 final XmlAttribute attribute = tag.getAttribute(path.getIdAttribute());
                 if (attribute != null) return attribute.getValueElement();
@@ -57,23 +61,25 @@ public abstract class XmlAttributeReferenceBase<T extends PsiElement> extends Ps
 
     @NotNull
     @Override
-    public Object[] getVariants() {
+    public LookupElementBuilder[] getVariants() {
 
         T value = getElement();
         Module module = ModuleUtil.findModuleForPsiElement(value);
 
         List<LookupElementBuilder> lookupElementBuilders = new ArrayList<>(512);
-        for (ConfigXmlAttribute attributeRef : pathsToAttributes) {
+        for (XmlIdPath attributePath : pathsToAttributes) {
             final Set<XmlTag> tags;
             if (module == null){
-                //inside external library
-                tags = ConfigXmlUtils.findTags(attributeRef.getToTag(), value.getProject());
+                //ref is inside external library
+                //tags = ConfigXmlUtils.findTags(attributePath.getToTag(), value.getProject());
+                tags = cache.findTags(attributePath, value.getProject());
             } else {
-                tags = ConfigXmlUtils.findTags(attributeRef.getToTag(), module);
+                //tags = ConfigXmlUtils.findTags(attributePath.getToTag(), module);
+                tags = cache.findTags(attributePath, module);
             }
 
             List<LookupElementBuilder> leb = mapNotNull(tags, tag -> {
-                String showName = tag.getAttributeValue(attributeRef.getIdAttribute());
+                String showName = tag.getAttributeValue(attributePath.getIdAttribute());
                 if (showName == null) return null;
                 PsiFile file = tag.getContainingFile();
                 String fileName = file.getName();
@@ -86,8 +92,9 @@ public abstract class XmlAttributeReferenceBase<T extends PsiElement> extends Ps
             lookupElementBuilders.addAll(leb);
         }
 
-
-        return lookupElementBuilders.toArray();
+        LookupElementBuilder[] arr = new LookupElementBuilder[lookupElementBuilders.size()];
+        return lookupElementBuilders.toArray(arr);
     }
+
 
 }

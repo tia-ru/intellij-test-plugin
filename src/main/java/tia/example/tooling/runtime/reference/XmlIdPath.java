@@ -1,12 +1,18 @@
 package tia.example.tooling.runtime.reference;
 
-public class ConfigXmlAttribute {
+public class XmlIdPath {
+    private final String namespace;
     private final String toTag;
     private final String idAttribute;
 
-    public ConfigXmlAttribute(String toTag, String idAttribute){
+    public XmlIdPath(String namespace, String toTag, String idAttribute){
+        this.namespace = namespace;
         this.toTag = toTag;
         this.idAttribute = idAttribute;
+    }
+
+    public String getNamespace() {
+        return namespace;
     }
 
     public String getToTag() {

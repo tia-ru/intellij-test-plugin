@@ -11,10 +11,12 @@ public class JavaPsiReferenceProvider extends PsiReferenceProvider {
 
     private final String toTag;
     private final String idAttribute;
+    private final XmlIdCache cache;
 
-    JavaPsiReferenceProvider(String toTag, String idAttribute) {
+    JavaPsiReferenceProvider(String toTag, String idAttribute, XmlIdCache cache) {
         this.toTag = toTag;
         this.idAttribute = idAttribute;
+        this.cache = cache;
     }
     @NotNull
     @Override
@@ -22,7 +24,7 @@ public class JavaPsiReferenceProvider extends PsiReferenceProvider {
 
         if (element instanceof PsiLiteralExpression) {
             PsiLiteralExpression ref = (PsiLiteralExpression) element;
-            return new PsiReference[]{new JavaPsiReference(ref, toTag, idAttribute)};
+            return new PsiReference[]{new JavaPsiReference(ref, toTag, idAttribute, cache)};
         }
         return PsiReference.EMPTY_ARRAY;
     }
