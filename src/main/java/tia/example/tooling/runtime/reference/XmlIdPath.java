@@ -22,4 +22,12 @@ public class XmlIdPath {
     public String getIdAttribute() {
         return idAttribute;
     }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "tag='" + toTag + '\'' +
+                ", att='" + idAttribute + '\'' +
+                '}';
+    }
 }
