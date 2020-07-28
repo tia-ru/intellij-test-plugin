@@ -1,17 +1,21 @@
 package tia.example.tooling.runtime.reference;
 
+import com.intellij.patterns.XmlAttributeValuePattern;
 import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.function.Function;
 
 /**
    Search for reference target
  */
-class ConfigXmlPsiReference extends XmlAttributeReferenceBase<XmlAttributeValue> {
+class ConfigXmlPsiReference extends XmlReferenceBase<XmlAttributeValue> {
 
-    public ConfigXmlPsiReference(@NotNull XmlAttributeValue ref, List<XmlIdPath> pathsToAttributes, XmlIdCache cache){
-        super(ref, pathsToAttributes, cache);
+    public ConfigXmlPsiReference(@NotNull XmlAttributeValue ref,
+                                 boolean isInContainingFile, Function<XmlAttributeValue, XmlAttributeValuePattern> patternGenerator,
+                                 XmlIdCache cache){
+
+        super(ref, isInContainingFile, patternGenerator, cache);
     }
 
     @Override

@@ -2,19 +2,21 @@ package tia.example.tooling.runtime.util;
 
 import com.intellij.patterns.*;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import tia.example.tooling.runtime.reference.XmlIdPath;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
 
-public class FilterBuilder {
+public class PatternBuilder {
 
     private Set<Namespace> namespaces = new HashSet<>(4);
 
 
-    public static FilterBuilder create(){
-        return new FilterBuilder();
+    public static PatternBuilder create(){
+        return new PatternBuilder();
     }
 
 
@@ -25,15 +27,15 @@ public class FilterBuilder {
     }
 
 
-    private ElementPattern<XmlAttributeValue> build() {
-        ElementPattern<XmlAttributeValue> pattern = null;
+    private XmlAttributeValuePattern build() {
+        XmlAttributeValuePattern pattern = null;
 
         for (Namespace ns : namespaces) {
-            ElementPattern<XmlAttributeValue> p = ns.qualifyAttributesPattern(null);
+            XmlAttributeValuePattern p = ns.qualifyAttributesPattern(null);
             if (pattern == null) {
                 pattern = p;
             } else if (p != null) {
-                pattern = StandardPatterns.or(pattern, p);
+                pattern = or(pattern, p);
             }
         }
 
@@ -69,10 +71,13 @@ public class FilterBuilder {
 
         protected XmlAttributeValuePattern qualifyTag(int level, XmlAttributeValuePattern pattern){
             pattern = pattern.withSuperParent(level, XmlPatterns.xmlTag().withLocalName(name));
-            return parent.qualifyTag(level + 1, pattern);
+            if (parent != null){
+                pattern = parent.qualifyTag(level + 1, pattern);
+            }
+            return pattern;
         }
 
-        protected ElementPattern<XmlAttributeValue> qualifyAttributesPattern(ElementPattern<XmlAttributeValue> attPattern){
+        protected XmlAttributeValuePattern qualifyAttributesPattern(XmlAttributeValuePattern attPattern){
 
             fun.apply(this); // Build child subtree
 
@@ -84,27 +89,27 @@ public class FilterBuilder {
                 XmlTagPattern.Capture tagPattern = XmlPatterns.xmlTag().withLocalName(tagNames).withNamespace(namespace);
                 XmlAttributeValuePattern p = XmlPatterns.xmlAttributeValue().withLocalName(entry.getKey())
                         .withSuperParent(2, tagPattern);
-                if (parent != null) {
-                    p = parent.qualifyTag(3, p);
-                }
+                p = qualifyTag(3, p);
+
                 if (attPattern == null) {
                     attPattern = p;
                 } else {
-                    attPattern = StandardPatterns.or(attPattern, p);
+                    attPattern = or(attPattern, p);
                 }
             }
 
             for (Element child : childs) {
-                ElementPattern<XmlAttributeValue> p = child.qualifyAttributesPattern(attPattern);
+                XmlAttributeValuePattern p = child.qualifyAttributesPattern(attPattern);
                 if (attPattern == null) {
                     attPattern = p;
                 } else {
-                    attPattern = StandardPatterns.or(attPattern, p);
+                    attPattern = or(attPattern, p);
                 }
             }
 
             return attPattern;
         }
+
 
         @Override
         public String toString() {
@@ -122,11 +127,11 @@ public class FilterBuilder {
         }
 
         public Namespace withNamespace(String namespace, Function<Element, Element> fun){
-            return FilterBuilder.this.withNamespace(namespace, fun);
+            return PatternBuilder.this.withNamespace(namespace, fun);
         }
 
-        public ElementPattern<XmlAttributeValue> build() {
-            return FilterBuilder.this.build();
+        public XmlAttributeValuePattern build() {
+            return PatternBuilder.this.build();
         }
 
         @Override
@@ -150,9 +155,40 @@ public class FilterBuilder {
         }
         return att2tag;
     }
+
+    @NotNull
+    @SafeVarargs
+    private static XmlAttributeValuePattern or(@NotNull final XmlAttributeValuePattern... patterns) {
+        return new XmlAttributeValuePattern(new InitialPatternConditionPlus(XmlAttributeValue.class) {
+            @Override
+            public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+                for (final XmlAttributeValuePattern pattern : patterns) {
+                    if (pattern.accepts(o, context)) return true;
+                }
+                return false;
+            }
+
+            @Override
+            public void append(@NotNull @NonNls final StringBuilder builder, final String indent) {
+                boolean first = true;
+                for (final ElementPattern pattern : patterns) {
+                    if (!first) {
+                        builder.append("\n").append(indent);
+                    }
+                    first = false;
+                    pattern.getCondition().append(builder, indent + "  ");
+                }
+            }
+
+            @Override
+            public List<XmlAttributeValuePattern> getPatterns() {
+                return Arrays.asList(patterns);
+            }
+        });
+    }
 }
 
 /*
 interface Namespace {
-    FilterBuilder withNamespace(String namespace);
+    PatternBuilder withNamespace(String namespace);
 }*/

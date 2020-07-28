@@ -8,10 +8,10 @@ import static tia.example.tooling.runtime.util.ConfigXmlUtils.NS_AF5_CONFIG;
 /**
    Search for reference target
  */
-class JavaPsiReference extends XmlAttributeReferenceBase<PsiLiteralExpression> {
+class JavaPsiReference extends XmlReferenceBase<PsiLiteralExpression> {
 
     JavaPsiReference(@NotNull PsiLiteralExpression ref, String toTag, String idAttribute, XmlIdCache cache) {
-        super(ref, NS_AF5_CONFIG, toTag, idAttribute, cache);
+        super(ref, false, NS_AF5_CONFIG, toTag, idAttribute, cache);
     }
 
     protected String getRef() {

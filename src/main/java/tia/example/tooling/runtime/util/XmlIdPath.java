@@ -1,6 +1,6 @@
-package tia.example.tooling.runtime.reference;
+package tia.example.tooling.runtime.util;
 
-public class XmlIdPath {
+class XmlIdPath {
     private final String namespace;
     private final String toTag;
     private final String idAttribute;

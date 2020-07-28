@@ -1,5 +1,6 @@
 package tia.example.tooling.runtime.reference;
 
+import com.intellij.patterns.XmlAttributeValuePattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
@@ -7,23 +8,20 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.function.Function;
 
 /**
  * Provides reference target resolver for xml-attributes found by matchers defined in {@code ConfigXmlPsiReferenceContributor}.
  */
 class ConfigXmlPsiReferenceProvider extends PsiReferenceProvider {
 
-    private final List<XmlIdPath> pathsToAttributes;
+    private final boolean isInContainingFile;
+    Function<XmlAttributeValue, XmlAttributeValuePattern> patternGenerator;
     private final XmlIdCache cache;
 
-/*    ConfigXmlPsiReferenceProvider(String toTag, String idAttribute) {
-        this.toAttributes = new ArrayList<>(1);
-        this.toAttributes.add(new XmlAttributeReferenceBase.XmlAttributeRef(toTag, idAttribute));
-    }*/
-
-    ConfigXmlPsiReferenceProvider(List<XmlIdPath> pathsToAttributes, XmlIdCache cache) {
-        this.pathsToAttributes = pathsToAttributes;
+    ConfigXmlPsiReferenceProvider(boolean isInContainingFile, Function<XmlAttributeValue, XmlAttributeValuePattern> patternGenerator, XmlIdCache cache) {
+        this.isInContainingFile = isInContainingFile;
+        this.patternGenerator = patternGenerator;
         this.cache = cache;
     }
 
@@ -33,7 +31,7 @@ class ConfigXmlPsiReferenceProvider extends PsiReferenceProvider {
         if (element instanceof XmlAttributeValue) {
             final XmlAttributeValue ref = (XmlAttributeValue) element;
             return new PsiReference[]{
-                    new ConfigXmlPsiReference(ref, pathsToAttributes, cache)
+                    new ConfigXmlPsiReference(ref, isInContainingFile, patternGenerator, cache)
                     };
         }
         return PsiReference.EMPTY_ARRAY;

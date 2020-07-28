@@ -1,8 +1,10 @@
 package tia.example.tooling.runtime.util;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -20,16 +22,18 @@ import com.intellij.util.xml.DomService;
 import com.intellij.util.xml.XmlFileHeader;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.xml.namespace.QName;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 public final class ConfigXmlUtils {
 
     private ConfigXmlUtils(){}
-
 
     public static final String NS_AF5_CONFIG = "https://cm5.intertrust.ru/config";
     public static final String NS_AF5_ACTION = "https://cm5.intertrust.ru/config/action";
@@ -50,12 +54,13 @@ public final class ConfigXmlUtils {
     public static final String ATTRIBUTE_TYPE = "type";
     public static final String ATTRIBUTE_EXTENDS = "extends";
 
-
+    private static final int PROLOG_SIZE = 512;
 
     public static boolean isAF5ConfigFile(PsiFile psiFile) {
         if (!(psiFile instanceof XmlFile)) {
             return false;
         }
+
         if (!StdFileTypes.XML.equals(psiFile.getFileType()) || "xsd".equalsIgnoreCase(psiFile.getVirtualFile().getExtension())) {
             return false;
         }
@@ -72,6 +77,29 @@ public final class ConfigXmlUtils {
         return isAF5ConfigRootTag(rootTag);
     }
 
+    /** based on code in {@code com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl#detectFromContent}
+     */
+    public static boolean isAF5ConfigFile(@NotNull VirtualFile file) {
+
+        if (!StdFileTypes.XML.equals(file.getFileType()) || "xsd".equalsIgnoreCase(file.getExtension())) {
+            return false;
+        }
+        int fileLength = (int) file.getLength();
+        if (fileLength <= 0) return false;
+        CharSequence prolog =  LoadTextUtil.loadText(file, PROLOG_SIZE);
+        return prolog.toString().contains(ConfigXmlUtils.NS_AF5_CONFIG);
+    }
+
+
+    private int readSafely(@NotNull InputStream stream, @NotNull byte[] buffer, int offset, int length) throws IOException {
+        int n = stream.read(buffer, offset, length);
+        if (n <= 0) {
+            // maybe locked because someone else is writing to it
+            // repeat inside read action to guarantee all writes are finished
+            n = ReadAction.compute(() -> stream.read(buffer, offset, length));
+        }
+        return n;
+    }
 
     public static boolean isAF5ConfigRootTag(@Nonnull XmlTag rootTag) {
         return TAG_AF5_CONFIG_ROOT.equals(rootTag.getLocalName());
