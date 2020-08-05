@@ -16,11 +16,10 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
-import tia.example.tooling.runtime.util.ConfigXmlUtils;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import tia.example.tooling.runtime.util.ConfigXmlUtils;
 
 public class XmlIdCache {
 
@@ -89,7 +88,7 @@ public class XmlIdCache {
         Set<XmlAttributeValue> values = get(xmlFile);
         for (XmlAttributeValue value : values) {
             String attValue = value.getValue();
-            if (id.equals(attValue) && pattern.accepts(value)) return value;
+            if (id.equalsIgnoreCase(attValue) && pattern.accepts(value)) return value;
         }
         return null;
     }

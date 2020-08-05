@@ -4,9 +4,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.XmlAttributeValuePattern;
@@ -17,11 +14,12 @@ import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.testFramework.LightVirtualFile;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
-import java.util.function.Function;
 
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
@@ -31,7 +29,13 @@ public abstract class XmlReferenceBase<T extends PsiElement> extends PsiReferenc
     private final boolean isInContainingFile;
     private final Function<T, XmlAttributeValuePattern> patternGenerator;
 
-    public XmlReferenceBase(T element, boolean isInContainingFile, String namespace, String toTag, String idAttribute, XmlIdCache cache) {
+    public XmlReferenceBase(T element,
+                            boolean isInContainingFile,
+                            String namespace,
+                            String toTag,
+                            String idAttribute,
+                            XmlIdCache cache) {
+
         super(element);
         this.isInContainingFile = isInContainingFile;
         this.cache = cache;
@@ -39,8 +43,12 @@ public abstract class XmlReferenceBase<T extends PsiElement> extends PsiReferenc
                 .withSuperParent(2, XmlPatterns.xmlTag().withLocalName(toTag).withNamespace(namespace));
         patternGenerator = (T e) -> pattern;
     }
-    public XmlReferenceBase(T element, boolean isInContainingFile,
-                            Function<T, XmlAttributeValuePattern> patternGenerator, XmlIdCache cache) {
+
+    public XmlReferenceBase(T element,
+                            boolean isInContainingFile,
+                            Function<T, XmlAttributeValuePattern> patternGenerator,
+                            XmlIdCache cache) {
+
         super(element);
         this.isInContainingFile = isInContainingFile;
         this.patternGenerator = patternGenerator;
@@ -104,7 +112,6 @@ public abstract class XmlReferenceBase<T extends PsiElement> extends PsiReferenc
                 virtualFile = ((LightVirtualFile) virtualFile).getOriginalFile();
             }
             scope = GlobalSearchScope.fileScope(element.getProject(), virtualFile);
-            //scope = new FileScope(element.getProject(), virtualFile, null);
             return scope;
         }
 
@@ -116,72 +123,5 @@ public abstract class XmlReferenceBase<T extends PsiElement> extends PsiReferenc
             scope = GlobalSearchScope.allScope(element.getProject());
         }
         return scope;
-    }
-
-    private static class FileScope extends GlobalSearchScope implements Iterable<VirtualFile> {
-        private final VirtualFile myVirtualFile; // files can be out of project roots
-        @Nullable private final String myDisplayName;
-        private final Module myModule;
-
-        private FileScope(@NotNull Project project, @Nullable VirtualFile virtualFile, @Nullable String displayName) {
-            super(project);
-            if (virtualFile instanceof LightVirtualFile) {
-                myVirtualFile = ((LightVirtualFile) virtualFile).getOriginalFile();
-            } else {
-                myVirtualFile = virtualFile;
-            }
-            myDisplayName = displayName;
-            final FileIndexFacade facade = FileIndexFacade.getInstance(project);
-            myModule = virtualFile == null || project.isDefault() ? null : facade.getModuleForFile(virtualFile);
-            //mySearchOutsideContent = project.isDefault() || virtualFile != null && myModule == null && !facade.isInLibraryClasses(virtualFile) && !facade.isInLibrarySource(virtualFile);
-        }
-
-        @Override
-        public boolean contains(@NotNull VirtualFile file) {
-            return Comparing.equal(myVirtualFile.getPath(), file.getPath());
-        }
-
-        @Override
-        public boolean isSearchInModuleContent(@NotNull Module aModule) {
-            return aModule == myModule;
-        }
-
-        @Override
-        public boolean isSearchInLibraries() {
-            return myModule == null;
-        }
-
-        @Override
-        public String toString() {
-            return "File :"+myVirtualFile;
-        }
-
-        @NotNull
-        @Override
-        public Iterator<VirtualFile> iterator() {
-            return Collections.singletonList(myVirtualFile).iterator();
-        }
-
-
-        @NotNull
-        @Override
-        public String getDisplayName() {
-            return myDisplayName != null ? myDisplayName : super.getDisplayName();
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || o.getClass() != getClass()) return false;
-            FileScope files = (FileScope)o;
-            return Objects.equals(myVirtualFile, files.myVirtualFile) &&
-                   Objects.equals(myDisplayName, files.myDisplayName) &&
-                   Objects.equals(myModule, files.myModule);
-        }
-
-        @Override
-        protected int calcHashCode() {
-            return Objects.hash(myVirtualFile, myModule, myDisplayName);
-        }
     }
 }
