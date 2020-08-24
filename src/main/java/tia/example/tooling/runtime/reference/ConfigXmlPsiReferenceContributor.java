@@ -1,9 +1,12 @@
 package tia.example.tooling.runtime.reference;
 
 import com.intellij.patterns.XmlAttributeValuePattern;
+import com.intellij.patterns.XmlElementPattern;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PathListReferenceProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -23,18 +26,20 @@ import static tia.example.tooling.runtime.util.ConfigXmlUtils.*;
 public class ConfigXmlPsiReferenceContributor extends PsiReferenceContributor {
 
     private static final XmlAttributeValuePattern ID_DECLARATION_PATTERN = PatternBuilder.create()
-            .withNamespace(NS_AF5_CONFIG, ns1 -> ns1
-                    .addIdPath(TAG_DOP, ATTRIBUTE_NAME)
-                    .addIdPath(TAG_FIELD_GROUP, ATTRIBUTE_NAME)
-                    .addIdPath("attachment-type", ATTRIBUTE_NAME)
-                    .addIdPath("collection", ATTRIBUTE_NAME)
-                    .addIdPath("attachment-storage", ATTRIBUTE_NAME)
-                    .addIdPath("context-role", ATTRIBUTE_NAME)
-                    .addIdPath("dynamic-group", ATTRIBUTE_NAME)
-                    .addIdPath("static-group", ATTRIBUTE_NAME)
+            .withNamespace(NS_AF5_CONFIG, ns -> ns
+                    .addIdPath(TAG_DOP, ATTR_NAME)
+                    .addIdPath(TAG_FIELD_GROUP, ATTR_NAME)
+                    .addIdPath("attachment-type", ATTR_NAME)
+                    .addIdPath("collection", ATTR_NAME)
+                    .addIdPath("context-role", ATTR_NAME)
+                    .addIdPath("dynamic-group", ATTR_NAME)
+                    .addIdPath("static-group", ATTR_NAME)
                     //UI
-                    .addIdPath("form", ATTRIBUTE_NAME)
-
+                    .addIdPath("form", ATTR_NAME)
+                    .insideTag("configuration", cfg -> cfg
+                            //Distinguish attachment-storage inside domain-object-type that is reference
+                            .addIdPath("attachment-storage", ATTR_NAME)
+                    )
                     // Widgets
                     .insideTag("widget-config", t1 -> t1
                             .addIdPath("action-executor", ATTRIBUTE_ID)
@@ -69,7 +74,8 @@ public class ConfigXmlPsiReferenceContributor extends PsiReferenceContributor {
                     )
             )
             .withNamespace(NS_AF5_ACTION, ns2 -> ns2
-                    .addIdPath("action", ATTRIBUTE_NAME)
+                    .addIdPath("action", ATTR_NAME)
+                    .addIdPath("simple-action", ATTR_NAME)
             )
             .build();
 
@@ -81,36 +87,70 @@ public class ConfigXmlPsiReferenceContributor extends PsiReferenceContributor {
 
     @Override
     public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
+
+        registerFileReferences(registrar);
+
         XmlAttributeValuePattern tmpPattern;
         // Self references.
         registrar.registerReferenceProvider(ID_DECLARATION_PATTERN, new ConfigXmlIdProvider());
 
         // <reference name="Type" type="SS_ModuleType"/>  -->  <domain-object-type name="SS_ModuleType">
-        addRef(registrar, TAG_REF, ATTRIBUTE_TYPE, TAG_DOP, ATTRIBUTE_NAME);
+        addRef(registrar, TAG_REF, ATTRIBUTE_TYPE, TAG_DOP, ATTR_NAME);
         //<domain-object-type extends="SS_ModuleAdd"> --> <domain-object-type name="SS_ModuleAdd">
-        addRef(registrar, TAG_DOP, ATTRIBUTE_EXTENDS, TAG_DOP, ATTRIBUTE_NAME);
+        addRef(registrar, TAG_DOP, ATTRIBUTE_EXTENDS, TAG_DOP, ATTR_NAME);
 
         //<include-group name="GroupActions" --> <field-group name="GroupActions"> />
-        addRef(registrar, TAG_INCLUDE_GROUP, ATTRIBUTE_NAME, TAG_FIELD_GROUP, ATTRIBUTE_NAME);
+        addRef(registrar, TAG_INCLUDE_GROUP, ATTR_NAME, TAG_FIELD_GROUP, ATTR_NAME);
+
         //<attachment-type storage="SOPersonFiles" />  --> <attachment-storage name = "SOPersonFiles">
-        addRef(registrar, "attachment-type", "storage", "attachment-storage", ATTRIBUTE_NAME);
-        addRef(registrar, "permit-role", ATTRIBUTE_NAME, "context-role", ATTRIBUTE_NAME);
-        addRef(registrar, "dependent-domain-object", ATTRIBUTE_NAME, TAG_DOP, ATTRIBUTE_NAME);
+        //
+        //<domain-object-type>
+        //    <attachment-storage name = "SOPersonFiles"/>
+        //</domain-object-type>
+        //-->
+        // <configuration>
+        //     <attachment-storage name = "SOPersonFiles">
+        // </configuration>
 
-
-        tmpPattern = PatternBuilder.create()
-                .withNamespace(NS_AF5_CONFIG, ns1 -> ns1
-                        .addIdPath("dynamic-group", ATTRIBUTE_NAME)
-                        .addIdPath("static-group", ATTRIBUTE_NAME)
+        XmlAttributeValuePattern attachmentStorageIdPattern = PatternBuilder.create()
+                .withNamespace(NS_AF5_CONFIG, ns -> ns
+                        .insideTag("configuration", c -> c
+                                .addIdPath("attachment-storage", ATTR_NAME)
+                        )
                 ).build();
-        addRef(registrar, NS_AF5_CONFIG, "permit-group", ATTRIBUTE_NAME, tmpPattern);
+        XmlAttributeValuePattern attachmentStorageRefPattern = PatternBuilder.create()
+                .withNamespace(NS_AF5_CONFIG, ns -> ns
+                        .addIdPath("attachment-type", "storage")
+                        .insideTag(TAG_DOP, c -> c
+                                .addIdPath("attachment-storage", ATTR_NAME)
+                        )
+                ).build();
+        addRef(registrar, attachmentStorageRefPattern, (e) -> attachmentStorageIdPattern, false);
+
+        tmpPattern = XmlPatterns.xmlAttributeValue().withLocalName(ATTR_NAME)
+                .withSuperParent(2, XmlPatterns.xmlTag()
+                        .withLocalName(TAG_DOP)
+                        .withAttributeValue("template", "true")
+                        .withNamespace(NS_AF5_CONFIG));
+        addRef(registrar, NS_AF5_CONFIG, "attachment-type", "template", tmpPattern);
+
+        addRef(registrar, "permit-role", ATTR_NAME, "context-role", ATTR_NAME);
+        addRef(registrar, "dependent-domain-object", ATTR_NAME, TAG_DOP, ATTR_NAME);
+
 
         tmpPattern = PatternBuilder.create()
-                .withNamespace(NS_AF5_CONFIG, ns1 -> ns1
-                        .addIdPath(TAG_DOP, ATTRIBUTE_NAME)
+                .withNamespace(NS_AF5_CONFIG, ns -> ns
+                        .addIdPath("dynamic-group", ATTR_NAME)
+                        .addIdPath("static-group", ATTR_NAME)
+                ).build();
+        addRef(registrar, NS_AF5_CONFIG, "permit-group", ATTR_NAME, tmpPattern);
+
+        tmpPattern = PatternBuilder.create()
+                .withNamespace(NS_AF5_CONFIG, ns -> ns
+                        .addIdPath(TAG_DOP, ATTR_NAME)
                         .insideTag(TAG_DOP, dop -> dop
                                 .insideTag("attachment-types", at -> at
-                                        .addIdPath("attachment-type", ATTRIBUTE_NAME)
+                                        .addIdPath("attachment-type", ATTR_NAME)
                                 )
                         )
                 ).build();
@@ -118,15 +158,37 @@ public class ConfigXmlPsiReferenceContributor extends PsiReferenceContributor {
 
 
         // UI ===============================================================================================
-        addRef(registrar, "form", "domain-object-type", TAG_DOP, ATTRIBUTE_NAME);
-        addRef(registrar, "form-mapping", "domain-object-type", TAG_DOP, ATTRIBUTE_NAME);
-        addRef(registrar, "form-mapping", "form", "form", ATTRIBUTE_NAME);
-        addRef(registrar, "collection-view", "collection", "collection", ATTRIBUTE_NAME);
-        addRef(registrar, "collection-ref", ATTRIBUTE_NAME, "collection", ATTRIBUTE_NAME);
-        addRef(registrar, "action-ref", "name-ref", "action", ATTRIBUTE_NAME, NS_AF5_ACTION);
+        addRef(registrar, "form", "domain-object-type", TAG_DOP, ATTR_NAME);
+        addRef(registrar, "form-mapping", "domain-object-type", TAG_DOP, ATTR_NAME);
+        addRef(registrar, "form-mapping", "form", "form", ATTR_NAME);
+
+        //<act:form-mapping form="A">  -> <form name="A">
+        //<form-mapping form="A">  -> <form name="A">
+        XmlAttributeValuePattern formMappingRefPattern = PatternBuilder.create()
+                .withNamespace(NS_AF5_CONFIG, ns -> ns
+                        .addIdPath("form-mapping", "form")
+                ).withNamespace(NS_AF5_ACTION, ns -> ns
+                        .addIdPath("form-mapping", "form")
+                ).build();
+        XmlAttributeValuePattern formMappingIdPattern = PatternBuilder.create()
+                .withNamespace(NS_AF5_CONFIG, ns -> ns
+                        .addIdPath("form", ATTR_NAME)
+                ).build();
+        addRef(registrar, formMappingRefPattern, (e) -> formMappingIdPattern, false);
+
+        addRef(registrar, "collection-view", "collection", "collection", ATTR_NAME);
+        addRef(registrar, "collection-ref", ATTR_NAME, "collection", ATTR_NAME);
+        addRef(registrar, "domain-object-surfer", "domain-object-type-to-create", TAG_DOP, ATTR_NAME);
+
+        tmpPattern = PatternBuilder.create()
+                .withNamespace(NS_AF5_ACTION, ns -> ns
+                        .addIdPath("action", ATTR_NAME)
+                        .addIdPath("simple-action", ATTR_NAME)
+                ).build();
+        addRef(registrar, NS_AF5_ACTION, "action-ref", "name-ref", tmpPattern);
 
         XmlAttributeValuePattern widgetPattern = PatternBuilder.create()
-                .withNamespace(NS_AF5_CONFIG, ns1 -> ns1
+                .withNamespace(NS_AF5_CONFIG, ns -> ns
                         .insideTag("widget-config", c -> c
                                 .addIdPath("action-executor", ATTRIBUTE_ID)
                                 .addIdPath("attachment-box", ATTRIBUTE_ID)
@@ -159,54 +221,71 @@ public class ConfigXmlPsiReferenceContributor extends PsiReferenceContributor {
                                 .addIdPath("text-box", ATTRIBUTE_ID)
                         )
                 ).build();
-        addRef(registrar, NS_AF5_CONFIG, "widget", "id", true, (refValue) -> {
+
+        addRef(registrar, NS_AF5_CONFIG, "widget", "id", (refValue) -> {
             XmlTag form = (XmlTag) PsiTreeUtil.findFirstParent(refValue, e -> e instanceof XmlTag && ((XmlTag) e).getLocalName().equals("form"));
             String formName = form.getAttributeValue("name");
-            return widgetPattern.withSuperParent(4,  XmlPatterns.xmlTag().withAttributeValue("name", formName));
-        });
+            return widgetPattern.withSuperParent(4, XmlPatterns.xmlTag().withAttributeValue("name", formName));
+        }, true);
 
     }
 
+    private void registerFileReferences(PsiReferenceRegistrar registrar) {
+        //final PsiReferenceProvider filePathReferenceProvider = new FilePathReferenceProvider();
+        final PsiReferenceProvider filePathReferenceProvider = new PathListReferenceProvider();
 
-    private void addRef(PsiReferenceRegistrar registrar,
-                        String refTag,
-                        String refAtt,
-                        String toTag,
-                        String toAtt) {
-        addRef(registrar, refTag, refAtt, toTag, toAtt, NS_AF5_CONFIG);
+        /*XmlElementPattern.XmlTextPattern xmlTextPattern = XmlPatterns.xmlText().withParent(
+                XmlPatterns.xmlTag().withLocalName("configuration-path").withNamespace(NS_AF5_MODULE));*/
+        XmlElementPattern.XmlTextPattern xmlTextPattern = XmlPatterns.xmlText().withParent(
+                XmlPatterns.xmlTag().withLocalName("configuration-path"));
+        registrar.registerReferenceProvider(xmlTextPattern, filePathReferenceProvider);
     }
 
-    private void addRef(@NotNull PsiReferenceRegistrar registrar,
-                        @NotNull String refTag, @NotNull String refAtt, @NotNull String toTag, @NotNull String toAtt, @NotNull String namespace) {
+    private void addRef(PsiReferenceRegistrar registrar, String refTag, String refAtt, String toTag, String toAtt) {
+        addRef(registrar, NS_AF5_CONFIG, refTag, refAtt, toTag, toAtt);
+    }
+
+    private void addRef(
+            @NotNull PsiReferenceRegistrar registrar,
+            @NotNull String namespace, @NotNull String refTag, @NotNull String refAtt,
+            @NotNull String toTag, @NotNull String toAtt) {
 
         XmlAttributeValuePattern pattern = XmlPatterns.xmlAttributeValue().withLocalName(toAtt)
                 .withSuperParent(2, XmlPatterns.xmlTag().withLocalName(toTag).withNamespace(namespace));
         addRef(registrar, namespace, refTag, refAtt, pattern);
     }
 
-    private void addRef(@NotNull PsiReferenceRegistrar registrar,
-                        @NotNull String namespace,
-                        @NotNull String refTag,
-                        @NotNull String refAtt,
-                        @NotNull XmlAttributeValuePattern pattern) {
+    private void addRef(
+            @NotNull PsiReferenceRegistrar registrar,
+            @NotNull String namespace, @NotNull String refTag, @NotNull String refAtt,
+            @NotNull XmlAttributeValuePattern idPattern) {
 
         registrar.registerReferenceProvider(
                 XmlPatterns.xmlAttributeValue(refAtt)
                         .withSuperParent(2, XmlPatterns.xmlTag().withLocalName(refTag).withNamespace(namespace)),
-                new ConfigXmlPsiReferenceProvider(false, (e)->pattern, ID_CACHE));
+                new ConfigXmlPsiReferenceProvider(false, (e) -> idPattern, ID_CACHE));
     }
 
-    private void addRef(@NotNull PsiReferenceRegistrar registrar,
-                        @NotNull String namespace,
-                        @NotNull String refTag,
-                        @NotNull String refAtt,
-                        @NotNull boolean isInContainingFile,
-                        @NotNull Function<XmlAttributeValue, XmlAttributeValuePattern> patternGenerator) {
+    private void addRef(
+            @NotNull PsiReferenceRegistrar registrar,
+            @NotNull String namespace,
+            @NotNull String refTag,
+            @NotNull String refAtt, @NotNull Function<XmlAttributeValue, XmlAttributeValuePattern> idPatternGenerator,
+            @NotNull boolean isInContainingFile) {
 
         registrar.registerReferenceProvider(
                 XmlPatterns.xmlAttributeValue(refAtt)
                         .withSuperParent(2, XmlPatterns.xmlTag().withLocalName(refTag).withNamespace(namespace)),
-                new ConfigXmlPsiReferenceProvider(isInContainingFile, patternGenerator, ID_CACHE));
+                new ConfigXmlPsiReferenceProvider(isInContainingFile, idPatternGenerator, ID_CACHE));
+    }
+
+    private void addRef(@NotNull PsiReferenceRegistrar registrar, @NotNull XmlAttributeValuePattern refPattern,
+                        @NotNull Function<XmlAttributeValue, XmlAttributeValuePattern> idPatternGenerator,
+                        @NotNull boolean isInContainingFile) {
+
+        registrar.registerReferenceProvider(
+                refPattern,
+                new ConfigXmlPsiReferenceProvider(isInContainingFile, idPatternGenerator, ID_CACHE));
     }
 }
 

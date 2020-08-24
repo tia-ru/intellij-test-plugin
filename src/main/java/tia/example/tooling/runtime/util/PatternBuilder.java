@@ -12,7 +12,7 @@ import java.util.function.Function;
 
 public class PatternBuilder {
 
-    private Set<Namespace> namespaces = new HashSet<>(4);
+    private final Set<Namespace> namespaces = new HashSet<>(4);
 
 
     public static PatternBuilder create(){
@@ -43,10 +43,10 @@ public class PatternBuilder {
     }
 
 
-    public class Element {
+    public static class Element {
         protected final String name;
         protected final String namespace;
-        private final Element parent;;
+        private final Element parent;
         List<Element> childs = new ArrayList<>();
         protected final List<XmlIdPath> pathsToAttributes = new ArrayList<>();
         private final Function<Element, Element> fun;
@@ -85,7 +85,7 @@ public class PatternBuilder {
 
             for (Map.Entry<String, Set<String>> entry : att2tag.entrySet()) {
                 Set<String> tags = entry.getValue();
-                String[] tagNames = tags.toArray(new String[tags.size()]);
+                String[] tagNames = tags.toArray(new String[0]);
                 XmlTagPattern.Capture tagPattern = XmlPatterns.xmlTag().withLocalName(tagNames).withNamespace(namespace);
                 XmlAttributeValuePattern p = XmlPatterns.xmlAttributeValue().withLocalName(entry.getKey())
                         .withSuperParent(2, tagPattern);
@@ -157,9 +157,8 @@ public class PatternBuilder {
     }
 
     @NotNull
-    @SafeVarargs
     private static XmlAttributeValuePattern or(@NotNull final XmlAttributeValuePattern... patterns) {
-        return new XmlAttributeValuePattern(new InitialPatternConditionPlus(XmlAttributeValue.class) {
+        return new XmlAttributeValuePattern(new InitialPatternConditionPlus<XmlAttributeValue>(XmlAttributeValue.class) {
             @Override
             public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
                 for (final XmlAttributeValuePattern pattern : patterns) {
@@ -171,7 +170,7 @@ public class PatternBuilder {
             @Override
             public void append(@NotNull @NonNls final StringBuilder builder, final String indent) {
                 boolean first = true;
-                for (final ElementPattern pattern : patterns) {
+                for (final XmlAttributeValuePattern pattern : patterns) {
                     if (!first) {
                         builder.append("\n").append(indent);
                     }
@@ -181,7 +180,7 @@ public class PatternBuilder {
             }
 
             @Override
-            public List<XmlAttributeValuePattern> getPatterns() {
+            public List<ElementPattern<?>> getPatterns() {
                 return Arrays.asList(patterns);
             }
         });

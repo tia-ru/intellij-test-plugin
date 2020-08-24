@@ -7,7 +7,7 @@ import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
 import org.jetbrains.annotations.NotNull;
 
-import static tia.example.tooling.runtime.util.ConfigXmlUtils.ATTRIBUTE_NAME;
+import static tia.example.tooling.runtime.util.ConfigXmlUtils.ATTR_NAME;
 import static tia.example.tooling.runtime.util.ConfigXmlUtils.TAG_DOP;
 
 public class JavaPsiReferenceContributor extends PsiReferenceContributor {
@@ -19,6 +19,6 @@ public class JavaPsiReferenceContributor extends PsiReferenceContributor {
         PsiJavaElementPattern.Capture<PsiLiteralExpression> filter = PsiJavaPatterns.literalExpression()
                 .annotationParam("ru.intertrust.cm.core.dao.api.extension.ExtensionPoint", "filter");
 
-        registrar.registerReferenceProvider(filter, new JavaPsiReferenceProvider(TAG_DOP, ATTRIBUTE_NAME, cache));
+        registrar.registerReferenceProvider(filter, new JavaPsiReferenceProvider(TAG_DOP, ATTR_NAME, cache));
     }
 }

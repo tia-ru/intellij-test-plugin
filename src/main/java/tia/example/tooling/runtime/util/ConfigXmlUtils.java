@@ -49,7 +49,7 @@ public final class ConfigXmlUtils {
     public static final String TAG_CONFIGURATION_PATHS = "configuration-paths";
     public static final String TAG_CONFIGURATION_PATH = "configuration-path";
 
-    public static final String ATTRIBUTE_NAME = "name";
+    public static final String ATTR_NAME = "name";
     public static final String ATTRIBUTE_ID = "id";
     public static final String ATTRIBUTE_TYPE = "type";
     public static final String ATTRIBUTE_EXTENDS = "extends";

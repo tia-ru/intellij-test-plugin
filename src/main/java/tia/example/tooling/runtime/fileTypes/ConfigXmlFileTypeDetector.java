@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import tia.example.tooling.runtime.util.ConfigXmlUtils;
 
-import java.util.Collection;
-import java.util.Collections;
-
 public class ConfigXmlFileTypeDetector implements FileTypeRegistry.FileTypeDetector {
     @Nullable
     @Override
@@ -25,12 +22,5 @@ public class ConfigXmlFileTypeDetector implements FileTypeRegistry.FileTypeDetec
     public int getVersion() {
         return 1;
     }
-
-    @Nullable
-    @Override
-    public Collection<? extends FileType> getDetectedFileTypes() {
-        return Collections.singleton(ConfigXmlFileType.INSTANCE);
-    }
-
 
 }
