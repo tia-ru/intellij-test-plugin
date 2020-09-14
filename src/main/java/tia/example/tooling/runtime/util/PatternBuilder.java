@@ -1,13 +1,23 @@
 package tia.example.tooling.runtime.util;
 
-import com.intellij.patterns.*;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.InitialPatternConditionPlus;
+import com.intellij.patterns.XmlAttributeValuePattern;
+import com.intellij.patterns.XmlPatterns;
+import com.intellij.patterns.XmlTagPattern;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 public class PatternBuilder {
@@ -186,8 +196,3 @@ public class PatternBuilder {
         });
     }
 }
-
-/*
-interface Namespace {
-    PatternBuilder withNamespace(String namespace);
-}*/

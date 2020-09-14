@@ -1,5 +1,6 @@
 package tia.example.tooling.runtime.reference;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataCache;
@@ -16,10 +17,11 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
+import tia.example.tooling.runtime.util.ConfigXmlUtils;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import tia.example.tooling.runtime.util.ConfigXmlUtils;
 
 public class XmlIdCache {
 
@@ -49,7 +51,7 @@ public class XmlIdCache {
 
         Project project = searchScope.getProject();
         final PsiManager psiManager = PsiManager.getInstance(project);
-        final Collection<VirtualFile> files = FileTypeIndex.getFiles(StdFileTypes.XML, searchScope);
+        final Collection<VirtualFile> files = FileTypeIndex.getFiles(XmlFileType.INSTANCE, searchScope);
 
         for (VirtualFile file : files) {
             if (ConfigXmlUtils.isAF5ConfigFile(file)) {

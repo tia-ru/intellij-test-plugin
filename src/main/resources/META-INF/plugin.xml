@@ -46,7 +46,26 @@
         <!--<dom.fileMetaData rootTagName="configuration"
                           implementation="tia.example.tooling.runtime.fileTypes.ConfigXmlDomFileDescription" />-->
 
-       <!-- <fileDocumentManagerListener implementation="tia.example.tooling.runtime.balloon.DocumentManagerListener"/>-->
+<!--        <fileDocumentManagerListener implementation="tia.example.tooling.runtime.balloon.DocumentManagerListener"/>-->
+        <postStartupActivity implementation="tia.example.tooling.runtime.validation.AF5ConfigurationCheckStartupActivity"/>
+        <localInspection groupName="AF5"
+                         language="XML"
+                         shortName="AF5ConfigIsNotRegisteredInCmModule"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="tia.example.tooling.runtime.inspections.AF5ConfigIsNotRegisteredInCmModule"
+                         bundle="messages.InspectionsBundle"
+                         key="af5.config.register.name"
+        />
+
+       <!-- <globalInspection groupName="AF5"
+                          shortName="AF5CmModuleIsAbsent"
+                          enabledByDefault="true"
+                          implementationClass="tia.example.tooling.runtime.inspections.AF5ModuleIsAbsent"
+                          bundle="messages.InspectionsBundle"
+                          key="af5.config.cmmodule.name"
+        />-->
+        <problemFileHighlightFilter implementation="tia.example.tooling.runtime.validation.ProblemFileHighlightFilter"/>
+        <!--<elementsToHighlightFilter implementation="tia.example.tooling.runtime.validation.ElementsToHighlightFilter" />-->
     </extensions>
 
     <actions>

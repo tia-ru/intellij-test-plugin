@@ -13,15 +13,18 @@ repositories {
 }
 
 dependencies {
+    implementation 'com.google.code.findbugs:jsr305:3.0.2'
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-    //version '2020.1.2'
+    //version '2020.2'
     version '2019.2.4'
     type 'IC'
+    //type 'IU'
     downloadSources = true
+    //plugins = ['properties', 'java', 'Spring']
     plugins = ['properties', 'java']
 
     runIde{
@@ -31,11 +34,11 @@ intellij {
 
 
 patchPluginXml {
-    //sinceBuild 'IC-201'
+    //sinceBuild 'IC-202'
     sinceBuild 'IC-192'
     untilBuild null
-    changeNotes """
+    /*changeNotes """
       Add change notes here.<br>
       <em>most HTML tags may be used</em>
-      """
+      """*/
 }

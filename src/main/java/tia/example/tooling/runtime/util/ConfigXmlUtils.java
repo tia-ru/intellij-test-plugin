@@ -1,21 +1,21 @@
 package tia.example.tooling.runtime.util;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NonNavigatable;
-import com.intellij.psi.*;
-import com.intellij.psi.search.FileTypeIndex;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomService;
@@ -29,7 +29,6 @@ import javax.annotation.Nullable;
 import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
 
 public final class ConfigXmlUtils {
 
@@ -61,7 +60,7 @@ public final class ConfigXmlUtils {
             return false;
         }
 
-        if (!StdFileTypes.XML.equals(psiFile.getFileType()) || "xsd".equalsIgnoreCase(psiFile.getVirtualFile().getExtension())) {
+        if (!XmlFileType.INSTANCE.equals(psiFile.getFileType()) || "xsd".equalsIgnoreCase(psiFile.getVirtualFile().getExtension())) {
             return false;
         }
         final XmlFile xmlFile = (XmlFile) psiFile;
@@ -81,13 +80,14 @@ public final class ConfigXmlUtils {
      */
     public static boolean isAF5ConfigFile(@NotNull VirtualFile file) {
 
-        if (!StdFileTypes.XML.equals(file.getFileType()) || "xsd".equalsIgnoreCase(file.getExtension())) {
+        if (!XmlFileType.INSTANCE.equals(file.getFileType()) || "xsd".equalsIgnoreCase(file.getExtension())) {
             return false;
         }
+
         int fileLength = (int) file.getLength();
         if (fileLength <= 0) return false;
-        CharSequence prolog =  LoadTextUtil.loadText(file, PROLOG_SIZE);
-        return prolog.toString().contains(ConfigXmlUtils.NS_AF5_CONFIG);
+        String prolog =  LoadTextUtil.loadText(file, PROLOG_SIZE).toString();
+        return prolog.contains(ConfigXmlUtils.NS_AF5_CONFIG) || prolog.contains(ConfigXmlUtils.NS_AF5_ACTION);
     }
 
 
@@ -105,118 +105,6 @@ public final class ConfigXmlUtils {
         return TAG_AF5_CONFIG_ROOT.equals(rootTag.getLocalName());
     }
 
-    public static Set<XmlTag> findTags(String tagPath, @Nonnull Module module) {
-
-        GlobalSearchScope scope = GlobalSearchScope.moduleRuntimeScope(module, false);
-        scope = GlobalSearchScope.getScopeRestrictedByFileTypes(scope, StdFileTypes.XML);
-        Set<XmlTag> tags = findTagsInScope(tagPath, scope);
-        return tags;
-
-    }
-    public static Set<XmlTag> findTags(String tagPath, @Nonnull Project project) {
-        GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-        scope = GlobalSearchScope.getScopeRestrictedByFileTypes(scope, StdFileTypes.XML);
-        Set<XmlTag> tags = findTagsInScope(tagPath, scope);
-        return tags;
-
-    }
-
-    @Nonnull
-    private static Set<XmlTag> findTagsInScope(String tagPath, GlobalSearchScope searchScope) {
-
-        String[] split = tagPath.split("/");
-
-        Project project = searchScope.getProject();
-        Set<XmlTag> result = new HashSet<>(512);
-        final Collection<VirtualFile> files = FileTypeIndex.getFiles(StdFileTypes.XML, searchScope);
-        PsiManager psiManager = PsiManager.getInstance(project);
-        for (VirtualFile file : files) {
-            final PsiFile psiFile = psiManager.findFile(file);
-            if (isAF5ConfigFile(psiFile)) {
-                XmlFile xmlFile = (XmlFile) psiFile;
-                final XmlTag rootElement = xmlFile.getRootTag();
-                List<XmlTag> subTags = findSubTags(rootElement, split, 0);
-                result.addAll(subTags);
-            }
-        }
-        return result;
-    }
-
-    @Nullable
-    public static XmlTag getTag(String id, String tagPath, String idAttribute, PsiElement refElement) {
-
-        final Project project = refElement.getProject();
-        //Search in the current file at first else we search globally
-        final PsiFile psiFile = refElement.getContainingFile();
-        XmlTag xmlTag = getTagInFile(id, tagPath, idAttribute, psiFile);
-        if (xmlTag != null) {
-            return xmlTag;
-        }
-
-        Module module = ModuleUtil.findModuleForPsiElement(refElement);
-        GlobalSearchScope scope;
-        if (module == null) {
-            //refElement is inside external library
-            scope = GlobalSearchScope.allScope(project);
-        } else {
-            scope = GlobalSearchScope.moduleRuntimeScope(module, false);//getModuleWithDependenciesAndLibrariesScope
-        }
-        scope = GlobalSearchScope.getScopeRestrictedByFileTypes(scope, StdFileTypes.XML);
-        xmlTag = getTagInScope(id, tagPath, idAttribute, scope);
-        return xmlTag;
-    }
-    @Nullable
-    private static XmlTag getTagInScope(String id, String tagPath, String idAttribute, GlobalSearchScope searchScope) {
-
-        Project project = searchScope.getProject();
-        final PsiManager psiManager = PsiManager.getInstance(project);
-        final Collection<VirtualFile> files = FileTypeIndex.getFiles(StdFileTypes.XML, searchScope);
-
-        for (VirtualFile file : files) {
-            final PsiFile psiFile = psiManager.findFile(file);
-            if (isAF5ConfigFile(psiFile)) {
-                XmlTag tag = getTagInFile(id, tagPath, idAttribute, psiFile);
-                if (tag != null) return tag;
-            }
-        }
-        return null;
-    }
-
-    @Nullable
-    private static XmlTag getTagInFile(String id, String tagPath, String idAttribute, PsiFile psiFile) {
-
-        if (!isAF5ConfigFile(psiFile)) {
-            return null;
-        }
-
-        XmlFile xmlFile = (XmlFile) psiFile;
-
-        final XmlTag rootElement = xmlFile.getRootTag();
-        if (rootElement == null) return null;
-        String[] split = tagPath.split("/");
-        final List<XmlTag> subTags = findSubTags(rootElement, split, 0);
-        for (XmlTag tag : subTags) {
-            if (id.equals(tag.getAttributeValue(idAttribute))) {
-                return tag;
-            }
-        }
-        return null;
-    }
-
-    private static List<XmlTag> findSubTags(XmlTag parent, String[] tagPathItems, int curIdx){
-        String name = tagPathItems[curIdx];
-        XmlTag[] tags = parent.findSubTags(name, parent.getNamespace());
-        if (curIdx == tagPathItems.length - 1){
-            return Arrays.asList(tags);
-        } else {
-            List<XmlTag> result = new ArrayList<>(tags.length * 2);
-            for (XmlTag subTag : tags) {
-                List<XmlTag> subTags = findSubTags(subTag, tagPathItems, curIdx + 1);
-                result.addAll(subTags);
-            }
-            return result;
-        }
-    }
 
     //=================================================================================================================
 
