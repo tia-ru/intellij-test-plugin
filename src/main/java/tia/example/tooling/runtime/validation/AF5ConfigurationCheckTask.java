@@ -35,9 +35,10 @@ class AF5ConfigurationCheckTask extends Backgroundable {
     }
 
     public void run(@NotNull ProgressIndicator indicator) {
-        ReadAction.nonBlocking(() -> {
-            this.runCollectors(ProgressIndicatorProvider.getGlobalProgressIndicator());
-        }).inSmartMode(this.myProject).wrapProgress(indicator).executeSynchronously();
+        ReadAction.nonBlocking(() -> this.runCollectors(ProgressIndicatorProvider.getGlobalProgressIndicator()))
+                .inSmartMode(this.myProject)
+                //.wrapProgress(indicator).executeSynchronously()
+        ;
     }
 
     private void runCollectors(ProgressIndicator indicator) {
@@ -93,7 +94,7 @@ class AF5ConfigurationCheckTask extends Backgroundable {
 
                         }
                     })*/
-                    .setIcon(AllIcons.Ide.ConfigFile).notify(this.getProject());
+                    .setIcon(AllIcons.Ide.Notification.InfoEvents).notify(this.getProject());
         }
     }
 

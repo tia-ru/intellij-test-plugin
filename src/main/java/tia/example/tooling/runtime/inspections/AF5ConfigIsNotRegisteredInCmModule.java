@@ -5,8 +5,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -78,13 +76,13 @@ public class AF5ConfigIsNotRegisteredInCmModule  extends LocalInspectionTool {
 
         @NotNull
         @Override
-        public @IntentionFamilyName String getFamilyName() {
+        public String getFamilyName() {
             return AF5Bundle.message("af5.config.register.family", "");
         }
 
         @NotNull
         @Override
-        public @IntentionName String getName() {
+        public String getName() {
             return AF5Bundle.message("af5.config.register.fix", fileName);
         }
 
@@ -105,7 +103,7 @@ public class AF5ConfigIsNotRegisteredInCmModule  extends LocalInspectionTool {
 
         @NotNull
         @Override
-        public @IntentionFamilyName String getFamilyName() {
+        public String getFamilyName() {
             return "Create cm-module.xml";
         }
 

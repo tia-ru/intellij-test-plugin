@@ -10,8 +10,6 @@ import com.intellij.codeInspection.ProblemDescriptionsProcessor;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
-import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
@@ -22,11 +20,6 @@ import tia.example.tooling.runtime.util.CmModuleUtils;
 public class AF5ModuleIsAbsent extends GlobalInspectionTool {
     @Override
     public boolean isGraphNeeded() {
-        return false;
-    }
-
-    @Override
-    public boolean isReadActionNeeded() {
         return false;
     }
 
@@ -67,13 +60,13 @@ public class AF5ModuleIsAbsent extends GlobalInspectionTool {
 
         @NotNull
         @Override
-        public @IntentionFamilyName String getFamilyName() {
+        public String getFamilyName() {
             return "Create cm-module.xml";
         }
 
         @NotNull
         @Override
-        public @IntentionName String getName() {
+        public String getName() {
             return "Create cm-module.xml for ...";
         }
 
