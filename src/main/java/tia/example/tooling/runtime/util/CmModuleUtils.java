@@ -4,6 +4,7 @@ import com.intellij.ide.actions.CreateFileFromTemplateAction;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.util.DirectoryChooserUtil;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -24,6 +25,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import tia.example.tooling.runtime.templates.Af5FilesTemplateManager;
 
@@ -33,6 +35,7 @@ import java.util.Set;
 
 public final class CmModuleUtils {
     public static final String CM_MODULE_XML_PATH = "META-INF/cm-module.xml";
+    private static final int PROLOG_SIZE = 512;
 
     private static final XmlElementPattern.XmlTextPattern REGISTERED_FILES_PATTERN = XmlPatterns.xmlText()
             .withParent(XmlPatterns.xmlTag().withLocalName(ConfigXmlUtils.TAG_CONFIGURATION_PATH));
@@ -58,6 +61,16 @@ public final class CmModuleUtils {
             if (moduleXml != null) return moduleXml;
         }
         return null;
+    }
+    public static boolean isCmModuleFile(@NotNull VirtualFile file) {
+
+        if (!file.getPath().endsWith(CM_MODULE_XML_PATH)) {
+            return false;
+        }
+        int fileLength = (int) file.getLength();
+        if (fileLength <= 0) return false;
+        String prolog =  LoadTextUtil.loadText(file, PROLOG_SIZE).toString();
+        return prolog.contains(ConfigXmlUtils.NS_AF5_MODULE);
     }
 
     public static boolean isDependsOnAF5(Module module) {
@@ -136,6 +149,9 @@ public final class CmModuleUtils {
 
     }
     public static boolean isRegistered(VirtualFile virtualFile, Module module) {
+
+        if (virtualFile == null) return false;
+
         Project project = module.getProject();
         ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
 

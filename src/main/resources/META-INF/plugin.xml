@@ -23,8 +23,8 @@
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.modules.xml</depends>
-    <depends>com.intellij.modules.vcs</depends>
     <depends>com.intellij.java</depends>
+    <depends>com.intellij.properties</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <psi.referenceContributor language="XML"
@@ -51,7 +51,8 @@
         <localInspection groupName="AF5"
                          language="XML"
                          shortName="AF5ConfigIsNotRegisteredInCmModule"
-                         enabledByDefault="true" level="ERROR"
+                         enabledByDefault="true"
+                         level="ERROR"
                          implementationClass="tia.example.tooling.runtime.inspections.AF5ConfigIsNotRegisteredInCmModule"
                          bundle="messages.InspectionsBundle"
                          key="af5.config.register.name"

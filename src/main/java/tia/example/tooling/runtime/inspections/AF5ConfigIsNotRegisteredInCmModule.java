@@ -28,7 +28,11 @@ public class AF5ConfigIsNotRegisteredInCmModule  extends LocalInspectionTool {
         boolean isAf5ConfigFile = ConfigXmlUtils.isAF5ConfigFile(file);
 
         Project project = file.getProject();
-        Module module = ModuleUtil.findModuleForFile(file.getVirtualFile(), project);
+        VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile == null){
+            virtualFile = file.getViewProvider().getVirtualFile();
+        }
+        Module module = ModuleUtil.findModuleForFile(virtualFile, project);
         if (module == null) return null;
 
         List<? super ProblemDescriptor> result = new ArrayList<>(2);
@@ -52,7 +56,7 @@ public class AF5ConfigIsNotRegisteredInCmModule  extends LocalInspectionTool {
 
         if (!isAf5ConfigFile) return null;
 
-        if (!CmModuleUtils.isRegistered(file.getVirtualFile(), module)) {
+        if (!CmModuleUtils.isRegistered(virtualFile, module)) {
             //PsiElement child = file.getFirstChild().getChildren()[0];
             ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(
                     file,

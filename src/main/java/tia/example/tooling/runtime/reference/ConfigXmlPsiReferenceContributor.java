@@ -1,11 +1,16 @@
 package tia.example.tooling.runtime.reference;
 
+import com.intellij.openapi.util.text.CharFilter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.XmlAttributeValuePattern;
-import com.intellij.patterns.XmlElementPattern;
 import com.intellij.patterns.XmlPatterns;
+import com.intellij.patterns.XmlTagPattern;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PathListReferenceProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -232,12 +237,23 @@ public class ConfigXmlPsiReferenceContributor extends PsiReferenceContributor {
 
     private void registerFileReferences(PsiReferenceRegistrar registrar) {
         //final PsiReferenceProvider filePathReferenceProvider = new FilePathReferenceProvider();
-        final PsiReferenceProvider filePathReferenceProvider = new PathListReferenceProvider();
+        final PsiReferenceProvider filePathReferenceProvider = new PathListReferenceProvider(){
+            @Override
+            protected boolean disableNonSlashedPaths() {
+                return false;
+            }
+            @NotNull
+            protected PsiReference[] createReferences(@NotNull PsiElement element, String s, int offset, final boolean soft) {
+                int contentOffset = StringUtil.findFirst(s, CharFilter.NOT_WHITESPACE_FILTER);
+                if (contentOffset >= 0) {
+                    offset += contentOffset;
+                }
+                FileReferenceSet fileReferenceSet = new ConfigXmlFileReferenceSet(s.trim(), element, offset, this, false, soft);
+                return fileReferenceSet.getAllReferences();
+            }
+        };
 
-        /*XmlElementPattern.XmlTextPattern xmlTextPattern = XmlPatterns.xmlText().withParent(
-                XmlPatterns.xmlTag().withLocalName("configuration-path").withNamespace(NS_AF5_MODULE));*/
-        XmlElementPattern.XmlTextPattern xmlTextPattern = XmlPatterns.xmlText().withParent(
-                XmlPatterns.xmlTag().withLocalName("configuration-path"));
+        XmlTagPattern xmlTextPattern = XmlPatterns.xmlTag().withLocalName("configuration-path").withNamespace(NS_AF5_MODULE);
         registrar.registerReferenceProvider(xmlTextPattern, filePathReferenceProvider);
     }
 
