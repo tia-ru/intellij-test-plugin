@@ -106,6 +106,7 @@ public class ConfigXmlPsiReferenceContributor extends PsiReferenceContributor {
 
         //<include-group name="GroupActions" --> <field-group name="GroupActions"> />
         addRef(registrar, TAG_INCLUDE_GROUP, ATTR_NAME, TAG_FIELD_GROUP, ATTR_NAME);
+        addRef(registrar, "track-domain-objects", ATTRIBUTE_TYPE, TAG_DOP, ATTR_NAME);
 
         //<attachment-type storage="SOPersonFiles" />  --> <attachment-storage name = "SOPersonFiles">
         //
