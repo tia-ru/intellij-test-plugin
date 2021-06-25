@@ -2,8 +2,7 @@ package tia.example.tooling.runtime.reference;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.XmlAttributeValuePattern;
@@ -116,13 +115,15 @@ public abstract class XmlReferenceBase<T extends PsiElement> extends PsiReferenc
             return scope;
         }
 
-        Module module = ModuleUtil.findModuleForPsiElement(element);
+        /*Module module = ModuleUtil.findModuleForPsiElement(element);
         if (module != null) {
             scope = GlobalSearchScope.moduleRuntimeScope(module, false);
         } else {
             //ref is inside external library
             scope = GlobalSearchScope.allScope(element.getProject());
-        }
+        }*/
+        scope = GlobalSearchScope.allScope(element.getProject());
+        scope = GlobalSearchScope.getScopeRestrictedByFileTypes(scope, XmlFileType.INSTANCE);
         return scope;
     }
 }

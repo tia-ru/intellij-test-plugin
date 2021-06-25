@@ -156,6 +156,7 @@ public final class CmModuleUtils {
         ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
 
         VirtualFile sourceRootForFile = projectRootManager.getFileIndex().getSourceRootForFile(virtualFile);
+        if (sourceRootForFile == null) return false;
         String body = VfsUtilCore.findRelativePath(sourceRootForFile, virtualFile, '/');
 
         //Module module = ModuleUtil.findModuleForFile(virtualFile, project);

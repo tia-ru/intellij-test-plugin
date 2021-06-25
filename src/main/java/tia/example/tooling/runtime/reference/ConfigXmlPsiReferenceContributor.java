@@ -254,7 +254,7 @@ public class ConfigXmlPsiReferenceContributor extends PsiReferenceContributor {
             }
         };
 
-        XmlTagPattern xmlTextPattern = XmlPatterns.xmlTag().withLocalName("configuration-path").withNamespace(NS_AF5_MODULE);
+        XmlTagPattern<XmlTagPattern.Capture> xmlTextPattern = XmlPatterns.xmlTag().withLocalName("configuration-path").withNamespace(NS_AF5_MODULE);
         registrar.registerReferenceProvider(xmlTextPattern, filePathReferenceProvider);
     }
 
