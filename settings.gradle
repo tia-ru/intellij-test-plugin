@@ -1,2 +1,8 @@
-rootProject.name = 'intellij-test-plugin'
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'af5-intellij-plugin'
 

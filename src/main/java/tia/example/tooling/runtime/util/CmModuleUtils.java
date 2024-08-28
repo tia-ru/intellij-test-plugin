@@ -74,7 +74,8 @@ public final class CmModuleUtils {
     }
 
     public static boolean isDependsOnAF5(Module module) {
-        return JavaLibraryUtils.hasLibraryClass(module, "ru.intertrust.cm.core.config.DomainObjectConfig");
+        return JavaLibraryUtils.hasClass(module, "ru.intertrust.cm.core.config.DomainObjectConfig");
+
 
         /*final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
 
@@ -91,7 +92,7 @@ public final class CmModuleUtils {
     }
 
     public static boolean isDependsOnAF5(Project project) {
-        return JavaLibraryUtils.hasLibraryClass(project, "ru.intertrust.cm.core.config.DomainObjectConfig");
+        return JavaLibraryUtils.hasClass(project, "ru.intertrust.cm.core.config.DomainObjectConfig");
     }
 
 

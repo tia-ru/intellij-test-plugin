@@ -20,7 +20,7 @@ import javax.swing.*;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class ConfigXmlFileType extends XmlLikeFileType implements FileTypeIdentifiableByVirtualFile {
+public class ConfigXmlFileType extends XmlLikeFileType {
 
     // is used in plugin.xml
     public static final ConfigXmlFileType INSTANCE = new ConfigXmlFileType();
@@ -58,11 +58,13 @@ public class ConfigXmlFileType extends XmlLikeFileType implements FileTypeIdenti
 
     /** based on code in {@code com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl#detectFromContent}
     */
-    @Override
+  /*  @Override
     public boolean isMyFileType(@NotNull VirtualFile file) {
 
-        /** Does NOT strip the BOM from the beginning of the stream, unlike the {@link VirtualFile#getInputStream()} */
+        *//** Does NOT strip the BOM from the beginning of the stream, unlike the {@link VirtualFile#getInputStream()} *//*
         try (InputStream inputStream = ((FileSystemInterface) file.getFileSystem()).getInputStream(file)) {
+            byte[] buffer = file.contentsToByteArray();
+
             int fileLength = (int) file.getLength();
             if (fileLength <= 0) return false;
 
@@ -101,4 +103,5 @@ public class ConfigXmlFileType extends XmlLikeFileType implements FileTypeIdenti
         }
         return n;
     }
+    */
 }

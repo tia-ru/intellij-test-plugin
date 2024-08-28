@@ -4,8 +4,9 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.PerformanceWatcher.Snapshot;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationListener.Adapter;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,8 +14,8 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.Task.Backgroundable;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,89 +25,99 @@ import tia.example.tooling.runtime.util.CmModuleUtils;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 class AF5ConfigurationCheckTask extends Backgroundable {
-    private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("AF5", NotificationDisplayType.STICKY_BALLOON, true);
-    private volatile Set<Module> myUnmappedConfigurations;
+    //private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("AF5", NotificationDisplayType.STICKY_BALLOON, true);
+    private volatile Set<Module> modulesWithoutCmModule;
 
     AF5ConfigurationCheckTask(Project project) {
         super(project, AF5Bundle.message("af5.config.check", new Object[0]));
     }
 
     public void run(@NotNull ProgressIndicator indicator) {
-        ReadAction.nonBlocking(() -> this.runCollectors(ProgressIndicatorProvider.getGlobalProgressIndicator()))
+        /*ReadAction.nonBlocking(() -> this.runCollectors(ProgressIndicatorProvider.getGlobalProgressIndicator()))
                 .inSmartMode(this.myProject)
                 //.wrapProgress(indicator).executeSynchronously()
-        ;
+        ;*/
+        //ProgressIndicatorProvider.getGlobalProgressIndicator();
+        ReadAction.run(() -> this.runCollectors(indicator));
     }
 
     private void runCollectors(ProgressIndicator indicator) {
-        Snapshot snapshot = PerformanceWatcher.takeSnapshot();
+        Snapshot snapshot = null;
+        if (ApplicationManager.getApplication().isInternal()) {
+            snapshot = PerformanceWatcher.takeSnapshot();
+        }
+        this.modulesWithoutCmModule = Collections.emptySet();
         Module[] modules = ModuleManager.getInstance(this.getProject()).getModules();
         if (modules.length != 0) {
-            AFCmModuleAbsentCollector unmappedCollector = new AFCmModuleAbsentCollector(modules);
-            if (unmappedCollector.isEnabledInProject()) {
-                unmappedCollector.collect(indicator);
-                this.myUnmappedConfigurations = unmappedCollector.getResults();
+            AFCmModuleAbsentCollector modulesCollector = new AFCmModuleAbsentCollector(modules);
+            modulesCollector.collect(indicator);
+            this.modulesWithoutCmModule = modulesCollector.getResults();
+
+            if (this.getProject().isDisposed()) {
+                return;
             }
-            if (ApplicationManager.getApplication().isInternal()) {
-                snapshot.logResponsivenessSinceCreation("AF5 Config Check [" + modules.length + " modules]");
+            if (!modulesWithoutCmModule.isEmpty()) {
+                createNotification(new HashSet<>(modulesWithoutCmModule)).notify(this.getProject());
             }
+        }
+
+        if (snapshot != null) {
+            snapshot.logResponsivenessSinceCreation("AF5 Config Check [" + modules.length + " modules]");
         }
     }
 
-    public void onSuccess() {
+/*    public void onSuccess() {
 
         if (this.getProject().isDisposed()) {
             return;
         }
-        Set<Module> unmappedResults = this.myUnmappedConfigurations == null ? Collections.emptySet() : this.myUnmappedConfigurations;
-        if (!unmappedResults.isEmpty()) {
-            StringBuilder notification = new StringBuilder();
-            if (!unmappedResults.isEmpty()) {
-
-                notification
-                        .append(AF5Bundle.message("af5.config.check.cmmodule.absent"))
-                        .append("<br/>");
-                for (Module module : unmappedResults) {
-                    String moduleName = module.getName();
-                    notification.append("<br/>");
-                    notification.append("<a href=\"config#").append(moduleName).append("\">").append(moduleName).append("</a>");
-                }
-            }
-
-            this.createNotification(notification.toString(), unmappedResults)
-                    /*.addAction(new NotificationAction(AF5Bundle.message("spring.facet.validation.disable.action", new Object[0])) {
-                        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-
-                            int result = Messages.showYesNoDialog(AF5ConfigurationCheckTask.this.getProject(),
-                                    AF5Bundle.message("spring.facet.detection.will.be.disabled.for.whole.project", new Object[0]),
-                                    AF5Bundle.message("spring.facet.config.detection", new Object[0]),
-                                    AF5Bundle.message("spring.facet/detection.disable.detection", new Object[0]),
-                                    CommonBundle.getCancelButtonText(),
-                                    Messages.getWarningIcon());
-                            if (result == 0) {
-                                //DetectionExcludesConfiguration detectionExcludesConfiguration = DetectionExcludesConfiguration.getInstance(getProject());
-                                //detectionExcludesConfiguration.addExcludedFramework(SpringFrameworkDetector.getSpringFrameworkType());
-                                notification.hideBalloon();
-                            }
-
-                        }
-                    })*/
-                    .setIcon(AllIcons.Ide.Notification.InfoEvents).notify(this.getProject());
+        if (!modulesWithoutCmModule.isEmpty()) {
+            createNotification(new HashSet<>(modulesWithoutCmModule)).notify(this.getProject());
         }
-    }
+    }*/
 
     @NotNull
-    private Notification createNotification(String notificationText, Set<Module> unmappedConfigurations) {
-        Notification notification = NOTIFICATION_GROUP.createNotification("AF5 Configuration Check",
-                notificationText,
-                NotificationType.WARNING,
-                new AF5ConfigurationCheckTask.UnmappedConfigurationsNotificationAdapter(this.getProject(),
-                        unmappedConfigurations));
+    private Notification createNotification(Set<Module> modulesWithoutCmModule) {
+
+        NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("AF5");
+        Notification notification = notificationGroup.createNotification(
+                //"AF5 Configuration Check",
+                AF5Bundle.message("af5.config.check.cmmodule.absent.title"),
+                AF5Bundle.message("af5.config.check.cmmodule.absent"),
+                NotificationType.INFORMATION)
+            //.setIcon(AllIcons.Ide.Notification.WarningEvents)
+            .setDropDownText("Ещё...");
+
+        if (modulesWithoutCmModule.size() > 1) {
+            notification.addAction(NotificationAction.createSimple("All", () -> {
+                for (Module module : modulesWithoutCmModule) {
+                    CmModuleUtils.createCmModuleFile(module, false);
+                }
+                notification.expire();
+            }));
+        }
+
+        for (Module module : modulesWithoutCmModule) {
+            NotificationAction action = NotificationAction.createSimple(module.getName(), () -> {
+                CmModuleUtils.createCmModuleFile(module, true);
+                updateNotification(notification);
+            });
+            notification.addAction(action);
+        }
 
         return notification;
+    }
+
+    private void updateNotification(@NotNull Notification notification) {
+
+        notification.expire();
+        ApplicationManager.getApplication().invokeLater(() -> {
+            (new AF5ConfigurationCheckTask(this.myProject)).queue();
+        }, this.myProject.getDisposed());
     }
 
    /* private static Pair<Module, Collection<VirtualFilePointer>> createPair(Entry<Module, Collection<PsiFile>> entry) {
@@ -207,4 +218,5 @@ class AF5ConfigurationCheckTask extends Backgroundable {
             return ModuleManager.getInstance(this.myProject).findModuleByName(navigationTarget);
         }
     }
+
 }

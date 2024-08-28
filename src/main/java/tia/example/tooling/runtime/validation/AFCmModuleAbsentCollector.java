@@ -26,12 +26,12 @@ import java.util.Set;
 
 class AFCmModuleAbsentCollector {
     private static final Logger LOG = Logger.getInstance("#com.intellij.spring.facet.validation.AFCmModuleAbsentCollector");
-    private static final LocalInspectionTool XML_CONFIG_INSPECTION = new AF5ConfigIsNotRegisteredInCmModule();
-    private final DetectionExcludesConfiguration myDetectionExcludesConfiguration;
-    private final InspectionProfile myProfile;
-    private final boolean myCheckXml;
+    //private static final LocalInspectionTool XML_CONFIG_INSPECTION = new AF5ConfigIsNotRegisteredInCmModule();
+    //private final DetectionExcludesConfiguration myDetectionExcludesConfiguration;
+    //private final InspectionProfile myProfile;
+    //private final boolean myCheckXml;
     private final Module[] myModules;
-    private final Project myProject;
+    //private final Project myProject;
     private final Set<Module> myNotConfiguredStorage = new HashSet<>();
 
     AFCmModuleAbsentCollector(Module... modules) {
@@ -39,16 +39,17 @@ class AFCmModuleAbsentCollector {
 
         assert modules.length != 0;
 
-        this.myProject = modules[0].getProject();
-        this.myDetectionExcludesConfiguration = DetectionExcludesConfiguration.getInstance(this.myProject);
-        InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(this.myProject);
+        //this.myProject = modules[0].getProject();
+        //this.myDetectionExcludesConfiguration = DetectionExcludesConfiguration.getInstance(this.myProject);
+
+        /*InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(this.myProject);
         this.myProfile = profileManager.getCurrentProfile();
-        this.myCheckXml = this.myProfile.isToolEnabled(HighlightDisplayKey.find(XML_CONFIG_INSPECTION.getID()));
+        this.myCheckXml = this.myProfile.isToolEnabled(HighlightDisplayKey.find(XML_CONFIG_INSPECTION.getID()));*/
     }
 
-    boolean isEnabledInProject() {
+/*    boolean isEnabledInProject() {
         return this.myCheckXml;
-    }
+    }*/
 
     void collect() {
         this.collect(new EmptyProgressIndicator());
@@ -64,7 +65,7 @@ class AFCmModuleAbsentCollector {
         for(int i = 0; i < myModules.length; i++) {
             Module module = myModules[i];
             indicator.checkCanceled();
-            if (this.myCheckXml && CmModuleUtils.isDependsOnAF5(module) && null == CmModuleUtils.getCmModuleFile(module)) {
+            if (CmModuleUtils.isDependsOnAF5(module) && null == CmModuleUtils.getCmModuleFile(module)) {
                 this.myNotConfiguredStorage.add(module);
             }
             indicator.setFraction((double)(i) / (double)this.myModules.length);
@@ -77,13 +78,13 @@ class AFCmModuleAbsentCollector {
         return this.myNotConfiguredStorage;
     }
 
-    private boolean skipConfigInspectionFor(PsiElement place, LocalInspectionTool tool) {
+    /*private boolean skipConfigInspectionFor(PsiElement place, LocalInspectionTool tool) {
         HighlightDisplayKey toolHighlightDisplayKey = HighlightDisplayKey.find(tool.getID());
         return !this.myProfile.isToolEnabled(toolHighlightDisplayKey, place) || SuppressionUtil.inspectionResultSuppressed(place, tool);
-    }
+    }*/
 
-    static NullableFunction<VirtualFilePointer, PsiFile> getVirtualFileMapper(@NotNull Project project) {
+   /* static NullableFunction<VirtualFilePointer, PsiFile> getVirtualFileMapper(@NotNull Project project) {
         PsiManager psiManager = PsiManager.getInstance(project);
         return (pointer) -> pointer.isValid() && pointer.getFile() != null ? psiManager.findFile(pointer.getFile()) : null;
-    }
+    }*/
 }

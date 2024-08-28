@@ -18,9 +18,4 @@ public class ConfigXmlFileTypeDetector implements FileTypeRegistry.FileTypeDetec
         return ConfigXmlFileType.INSTANCE;
     }
 
-    @Override
-    public int getVersion() {
-        return 1;
-    }
-
 }

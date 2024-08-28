@@ -5,7 +5,7 @@
 
     <description><![CDATA[
      <h2>Неофициальный плагин "IntelliJ IDEA" для поддержки "ActiveFrame 5"</h2>
-     Минимальная версия "IntelliJ IDEA" - 2019.2.
+     Минимальная версия "IntelliJ IDEA" - 2023.1.
      <p>
      Базовая поддержка конфигурационных xml-файлов AF5:
     <ul>
@@ -67,6 +67,7 @@
         />-->
         <problemFileHighlightFilter implementation="tia.example.tooling.runtime.validation.ProblemFileHighlightFilter"/>
         <!--<elementsToHighlightFilter implementation="tia.example.tooling.runtime.validation.ElementsToHighlightFilter" />-->
+        <notificationGroup displayType="STICKY_BALLOON" id="AF5" isLogByDefault="true" />
     </extensions>
 
     <actions>
@@ -83,4 +84,5 @@
             <add-to-group group-id="NewXmlDescriptor" anchor="first"/>
         </action>
     </actions>
+
 </idea-plugin>

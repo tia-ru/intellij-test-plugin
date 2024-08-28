@@ -2,6 +2,7 @@ package tia.example.tooling.runtime.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeView;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -50,6 +51,11 @@ public class CreateModuleFileAction extends AnAction implements WriteActionAware
         final boolean enabled = isAvailable(dataContext);
         final Presentation presentation = e.getPresentation();
         presentation.setEnabledAndVisible(enabled);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
     }
 
     private void createCmModuleFile(PsiDirectory dir) {
