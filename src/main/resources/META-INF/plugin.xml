@@ -1,5 +1,5 @@
-<idea-plugin require-restart="false" >
-    <id>tia.test.af5-intellij</id>
+<idea-plugin require-restart="false" package="ru.intertrust.af5.idea">
+    <id>ru.intertrust.af5.idea</id>
     <name>AF5</name>
     <vendor email="support@example.com" url="http://www.example.com">Tugushev Ilya</vendor>
 
@@ -28,17 +28,17 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <psi.referenceContributor language="XML"
-                                  implementation="tia.example.tooling.runtime.reference.ConfigXmlPsiReferenceContributor"/>
+                                  implementation="ru.intertrust.af5.idea.reference.ConfigXmlPsiReferenceContributor"/>
         <psi.referenceContributor language="JAVA"
-                                  implementation="tia.example.tooling.runtime.reference.JavaPsiReferenceContributor"/>
+                                  implementation="ru.intertrust.af5.idea.reference.JavaPsiReferenceContributor"/>
 
-        <!--<fileTypeDetector implementation="tia.example.tooling.runtime.fileTypes.ConfigXmlFileTypeDetector" order="first" />
-        <fileType name="AF5 Config" implementationClass="tia.example.tooling.runtime.fileTypes.ConfigXmlFileType" fieldName="INSTANCE" language="af5-config"/>-->
+        <!--<fileTypeDetector implementation="fileTypes.ru.intertrust.af5.idea.ConfigXmlFileTypeDetector" order="first" />
+        <fileType name="AF5 Config" implementationClass="fileTypes.ru.intertrust.af5.idea.ConfigXmlFileType" fieldName="INSTANCE" language="af5-config"/>-->
         <!--<fileTypeOverrider implementation=""-->
 
-        <implicitUsageProvider implementation="tia.example.tooling.runtime.usage.Af5ImplicitUsageProvider" />
+        <implicitUsageProvider implementation="ru.intertrust.af5.idea.usage.Af5ImplicitUsageProvider" />
 
-        <fileTemplateGroup implementation="tia.example.tooling.runtime.templates.Af5FilesTemplateManager"/>
+        <fileTemplateGroup implementation="ru.intertrust.af5.idea.templates.Af5FilesTemplateManager"/>
         <!--<xml.implicitIdRefProvider implementation="" />-->
 
         <!--<renamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.rename.RenamePropertyProcessor"/>-->
@@ -48,13 +48,13 @@
                           implementation="tia.example.tooling.runtime.fileTypes.ConfigXmlDomFileDescription" />-->
 
 <!--        <fileDocumentManagerListener implementation="tia.example.tooling.runtime.balloon.DocumentManagerListener"/>-->
-        <postStartupActivity implementation="tia.example.tooling.runtime.validation.AF5ConfigurationCheckStartupActivity"/>
+        <postStartupActivity implementation="ru.intertrust.af5.idea.validation.AF5ConfigurationCheckStartupActivity"/>
         <localInspection groupName="AF5"
                          language="XML"
                          shortName="AF5ConfigIsNotRegisteredInCmModule"
                          enabledByDefault="true"
                          level="ERROR"
-                         implementationClass="tia.example.tooling.runtime.inspections.AF5ConfigIsNotRegisteredInCmModule"
+                         implementationClass="ru.intertrust.af5.idea.inspections.AF5ConfigIsNotRegisteredInCmModule"
                          bundle="messages.InspectionsBundle"
                          key="af5.config.register.name"
         />
@@ -62,25 +62,25 @@
        <!-- <globalInspection groupName="AF5"
                           shortName="AF5CmModuleIsAbsent"
                           enabledByDefault="true"
-                          implementationClass="tia.example.tooling.runtime.inspections.AF5ModuleIsAbsent"
+                          implementationClass="inspections.ru.intertrust.af5.idea.AF5ModuleIsAbsent"
                           bundle="messages.InspectionsBundle"
                           key="af5.config.cmmodule.name"
         />-->
-        <problemFileHighlightFilter implementation="tia.example.tooling.runtime.validation.ProblemFileHighlightFilter"/>
-        <!--<elementsToHighlightFilter implementation="tia.example.tooling.runtime.validation.ElementsToHighlightFilter" />-->
+        <problemFileHighlightFilter implementation="ru.intertrust.af5.idea.validation.ProblemFileHighlightFilter"/>
+        <!--<elementsToHighlightFilter implementation="validation.ru.intertrust.af5.idea.ElementsToHighlightFilter" />-->
         <notificationGroup displayType="STICKY_BALLOON" id="AF5" isLogByDefault="true" />
     </extensions>
 
     <actions>
-        <action id="tia.example.tooling.runtime.actions.CreateModuleFileAction"
-                class="tia.example.tooling.runtime.actions.CreateModuleFileAction" text="AF5 Module"
+        <action id="ru.intertrust.af5.idea.actions.CreateModuleFileAction"
+                class="ru.intertrust.af5.idea.actions.CreateModuleFileAction" text="AF5 Module"
                 description="Create new AF5 module config">
             <!--<add-to-group group-id="NewGroup" anchor="first"/> -->
             <add-to-group group-id="NewXmlDescriptor" anchor="first"/>
             <!--<keyboard-shortcut keymap="$default" first-keystroke="shift ctrl W"/>-->
         </action>
-        <action id="tia.example.tooling.runtime.actions.CreateDopFileAction"
-                class="tia.example.tooling.runtime.actions.CreateDopFileAction" text="AF5 Config"
+        <action id="ru.intertrust.af5.idea.actions.CreateDopFileAction"
+                class="ru.intertrust.af5.idea.actions.CreateDopFileAction" text="AF5 Config"
                 description="Create new AF5 config">
             <add-to-group group-id="NewXmlDescriptor" anchor="first"/>
         </action>

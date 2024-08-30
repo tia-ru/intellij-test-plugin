@@ -68,3 +68,5 @@ intellijPlatform {
         }
     }
 }
+
+runIde.jvmArgs += "-XX:+UnlockDiagnosticVMOptions"
