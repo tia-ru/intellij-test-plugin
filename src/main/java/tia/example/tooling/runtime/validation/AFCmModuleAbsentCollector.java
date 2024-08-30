@@ -1,28 +1,17 @@
 package tia.example.tooling.runtime.validation;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.SuppressionUtil;
-import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.util.NullableFunction;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.vfs.VirtualFile;
 import tia.example.tooling.runtime.inspections.AF5Bundle;
-import tia.example.tooling.runtime.inspections.AF5ConfigIsNotRegisteredInCmModule;
 import tia.example.tooling.runtime.util.CmModuleUtils;
+import tia.example.tooling.runtime.util.ConfigXmlUtils;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 class AFCmModuleAbsentCollector {
     private static final Logger LOG = Logger.getInstance("#com.intellij.spring.facet.validation.AFCmModuleAbsentCollector");
@@ -32,7 +21,7 @@ class AFCmModuleAbsentCollector {
     //private final boolean myCheckXml;
     private final Module[] myModules;
     //private final Project myProject;
-    private final Set<Module> myNotConfiguredStorage = new HashSet<>();
+    private final Map<Module, Collection<VirtualFile>> myNotConfiguredStorage = new HashMap<>();
 
     AFCmModuleAbsentCollector(Module... modules) {
         this.myModules = modules;
@@ -65,16 +54,20 @@ class AFCmModuleAbsentCollector {
         for(int i = 0; i < myModules.length; i++) {
             Module module = myModules[i];
             indicator.checkCanceled();
-            if (CmModuleUtils.isDependsOnAF5(module) && null == CmModuleUtils.getCmModuleFile(module)) {
-                this.myNotConfiguredStorage.add(module);
-            }
             indicator.setFraction((double)(i) / (double)this.myModules.length);
+            //if (CmModuleUtils.isDependsOnAF5(module) && null == CmModuleUtils.getCmModuleFile(module)) {
+            if (null == CmModuleUtils.getCmModuleFile(module)) {
+                Collection<VirtualFile> af5ConfigFiles = ConfigXmlUtils.searchAF5ConfigFiles(module);
+                if (!af5ConfigFiles.isEmpty()) {
+                    this.myNotConfiguredStorage.put(module, af5ConfigFiles);
+                }
+            }
         }
 
         LOG.debug("================= END ============  total time: " + (System.currentTimeMillis() - start));
     }
 
-    Set<Module> getResults() {
+    Map<Module, Collection<VirtualFile>> getResults() {
         return this.myNotConfiguredStorage;
     }
 

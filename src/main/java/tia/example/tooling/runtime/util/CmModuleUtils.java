@@ -3,10 +3,12 @@ package tia.example.tooling.runtime.util;
 import com.intellij.ide.actions.CreateFileFromTemplateAction;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.ide.util.DirectoryChooserUtil;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -24,11 +26,14 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import tia.example.tooling.runtime.templates.Af5FilesTemplateManager;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,13 +45,15 @@ public final class CmModuleUtils {
     private static final XmlElementPattern.XmlTextPattern REGISTERED_FILES_PATTERN = XmlPatterns.xmlText()
             .withParent(XmlPatterns.xmlTag().withLocalName(ConfigXmlUtils.TAG_CONFIGURATION_PATH));
 
+
+
     private static final UserDataCache<CachedValue<Set<String>>, XmlFile, Void> cache
-            = new UserDataCache<CachedValue<Set<String>>, XmlFile, Void>("tia.cache.xml.af5.module.files") {
+            = new UserDataCache<>("tia.cache.xml.af5.module.files") {
         @Override
         protected CachedValue<Set<String>> compute(final XmlFile xmlFile, Void p) {
             CachedValuesManager manager = CachedValuesManager.getManager(xmlFile.getProject());
             return manager.createCachedValue(
-                    () -> CachedValueProvider.Result.create(doCompute(xmlFile), xmlFile), false);
+            () -> CachedValueProvider.Result.create(doCompute(xmlFile), xmlFile), false);
         }
     };
 
@@ -114,41 +121,97 @@ public final class CmModuleUtils {
         return cmModuleFile;
     }
 
-    public static void addToCmModule(VirtualFile virtualFile, Project project) {
+    public static PsiFile createCmModuleFile(Module module, Collection<VirtualFile> af5ConfigXmlFiles, boolean openFile){
+
+
+        PsiFile cmModuleFile = createCmModuleFile(module, false);
+        if (cmModuleFile == null) return null;
+
+        WriteCommandAction.writeCommandAction(cmModuleFile)
+                .withName("'Add AF5 config files to cm-module.xml'")
+                .run(() -> {
+
+            for (VirtualFile af5ConfigXmlFile : af5ConfigXmlFiles) {
+                addToCmModule(af5ConfigXmlFile, module);
+            }
+
+            if (openFile) {
+                final FileTemplate template = FileTemplateManager.getInstance(module.getProject()).getInternalTemplate(Af5FilesTemplateManager.AF_MODULE_FILE);
+                if (template.isLiveTemplateEnabled()) {
+                    CreateFromTemplateActionBase.startLiveTemplate(cmModuleFile, Collections.emptyMap());
+                } else {
+                    FileEditorManager.getInstance(module.getProject()).openFile(cmModuleFile.getVirtualFile(), true);
+                }
+            }
+        });
+
+        return cmModuleFile;
+    }
+
+    public static void addToCmModule(VirtualFile virtualFile, Module module) {
 
         /*Project project = file.getProject();
         VirtualFile virtualFile = file.getVirtualFile();*/
-        Module module = ModuleUtil.findModuleForFile(virtualFile, project);
+        //Module module = ModuleUtil.findModuleForFile(virtualFile, project);
         if (module == null) return;
+        Project project = module.getProject();
 
         XmlFile xml = CmModuleUtils.getCmModulePsiFile(module);
         if (xml == null) return;
         XmlTag rootTag = xml.getRootTag();
+        if (rootTag == null) return;
         //XmlDocument xmlDoc = xml.getDocument();
         if (!ConfigXmlUtils.NS_AF5_MODULE.equals(rootTag.getNamespace())) return;
 
+        WriteCommandAction.writeCommandAction(xml)
+                .withName("Add file '" + virtualFile.getName() + "' to cm-module.xml")
+                .run(() -> {
+                    setPath(virtualFile, rootTag, project);
+
+                    XmlTag nameTag = rootTag.findFirstSubTag(ConfigXmlUtils.TAG_CONFIGURATION_NAME);
+                    if (nameTag == null) return;
+                    nameTag.getValue().setText(module.getName());
+                });
+    }
+
+    private static void setPath(VirtualFile af5ConfigFile, XmlTag rootTag, Project project) {
         XmlTag[] subTags = rootTag.findSubTags(ConfigXmlUtils.TAG_CONFIGURATION_PATHS, ConfigXmlUtils.NS_AF5_MODULE);
         XmlTag configPaths;
-        if (subTags.length == 0 ){
+        if (subTags.length == 0) {
             configPaths = rootTag.createChildTag(ConfigXmlUtils.TAG_CONFIGURATION_PATHS, ConfigXmlUtils.NS_AF5_MODULE, null, false);
             configPaths = rootTag.addSubTag(configPaths, false);
         } else {
             configPaths = subTags[0];
         }
 
-        /*ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-        List<VirtualFile> resourceRoots = rootManager.getSourceRoots(JavaResourceRootType.RESOURCE);*/
+                    /*ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+                    List<VirtualFile> resourceRoots = rootManager.getSourceRoots(JavaResourceRootType.RESOURCE);*/
         //String body = IfsUtil.getReferencePath(project, file.getVirtualFile());
         //body = body.substring(1);
 
         ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-        VirtualFile sourceRootForFile = projectRootManager.getFileIndex().getSourceRootForFile(virtualFile);
-        String body = VfsUtilCore.findRelativePath(sourceRootForFile, virtualFile, '/');
+        VirtualFile sourceRootForFile = projectRootManager.getFileIndex().getSourceRootForFile(af5ConfigFile);
+        String body = VfsUtilCore.findRelativePath(sourceRootForFile, af5ConfigFile, '/');
 
-        XmlTag path = configPaths.createChildTag(ConfigXmlUtils.TAG_CONFIGURATION_PATH, ConfigXmlUtils.NS_AF5_MODULE, body, false);
-        path = configPaths.addSubTag(path, false);
+        XmlTag[] paths = configPaths.findSubTags(ConfigXmlUtils.TAG_CONFIGURATION_PATH, ConfigXmlUtils.NS_AF5_MODULE);
 
+        XmlTag targetPath = null;
+        for (XmlTag path : paths) {
+            XmlTagValue value = path.getValue();
+            if (value.getTrimmedText().isEmpty()) {
+                targetPath = path;
+                break;
+            }
+        }
+
+        if (targetPath == null) {
+            targetPath = configPaths.createChildTag(ConfigXmlUtils.TAG_CONFIGURATION_PATH, ConfigXmlUtils.NS_AF5_MODULE, body, false);
+            targetPath = configPaths.addSubTag(targetPath, false);
+        } else {
+            targetPath.getValue().setText(body);
+        }
     }
+
     public static boolean isRegistered(VirtualFile virtualFile, Module module) {
 
         if (virtualFile == null) return false;
@@ -163,9 +226,9 @@ public final class CmModuleUtils {
         //Module module = ModuleUtil.findModuleForFile(virtualFile, project);
         //if (module == null) return false;
 
-        XmlFile af5ModuleXml = CmModuleUtils.getCmModulePsiFile(module);
-        if (af5ModuleXml == null) return false;
-        Set<String> registeredFiles = cache.get(af5ModuleXml, null).getValue();
+        XmlFile cmModuleXml = CmModuleUtils.getCmModulePsiFile(module);
+        if (cmModuleXml == null) return false;
+        Set<String> registeredFiles = cache.get(cmModuleXml, null).getValue();
         return registeredFiles.contains(body.toLowerCase());
     }
     private static PsiDirectory getResourceRoot(Module module) {

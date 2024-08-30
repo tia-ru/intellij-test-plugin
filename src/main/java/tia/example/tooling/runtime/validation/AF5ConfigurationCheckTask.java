@@ -2,7 +2,6 @@ package tia.example.tooling.runtime.validation;
 
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.PerformanceWatcher.Snapshot;
-import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroup;
@@ -15,22 +14,21 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task.Backgroundable;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import tia.example.tooling.runtime.inspections.AF5Bundle;
 import tia.example.tooling.runtime.util.CmModuleUtils;
 
 import javax.swing.event.HyperlinkEvent;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 class AF5ConfigurationCheckTask extends Backgroundable {
     //private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("AF5", NotificationDisplayType.STICKY_BALLOON, true);
-    private volatile Set<Module> modulesWithoutCmModule;
 
     AF5ConfigurationCheckTask(Project project) {
         super(project, AF5Bundle.message("af5.config.check", new Object[0]));
@@ -46,22 +44,23 @@ class AF5ConfigurationCheckTask extends Backgroundable {
     }
 
     private void runCollectors(ProgressIndicator indicator) {
+        Map<Module, Collection<VirtualFile>> modulesWithoutCmModule;
         Snapshot snapshot = null;
+        
         if (ApplicationManager.getApplication().isInternal()) {
             snapshot = PerformanceWatcher.takeSnapshot();
         }
-        this.modulesWithoutCmModule = Collections.emptySet();
         Module[] modules = ModuleManager.getInstance(this.getProject()).getModules();
         if (modules.length != 0) {
             AFCmModuleAbsentCollector modulesCollector = new AFCmModuleAbsentCollector(modules);
             modulesCollector.collect(indicator);
-            this.modulesWithoutCmModule = modulesCollector.getResults();
+            modulesWithoutCmModule = modulesCollector.getResults();
 
             if (this.getProject().isDisposed()) {
                 return;
             }
             if (!modulesWithoutCmModule.isEmpty()) {
-                createNotification(new HashSet<>(modulesWithoutCmModule)).notify(this.getProject());
+                createNotification(modulesWithoutCmModule).notify(this.getProject());
             }
         }
 
@@ -81,7 +80,7 @@ class AF5ConfigurationCheckTask extends Backgroundable {
     }*/
 
     @NotNull
-    private Notification createNotification(Set<Module> modulesWithoutCmModule) {
+    private Notification createNotification(Map<Module, Collection<VirtualFile>> modulesWithoutCmModule) {
 
         NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("AF5");
         Notification notification = notificationGroup.createNotification(
@@ -94,16 +93,21 @@ class AF5ConfigurationCheckTask extends Backgroundable {
 
         if (modulesWithoutCmModule.size() > 1) {
             notification.addAction(NotificationAction.createSimple("All", () -> {
-                for (Module module : modulesWithoutCmModule) {
-                    CmModuleUtils.createCmModuleFile(module, false);
+                for (Map.Entry<Module, Collection<VirtualFile>> entry : modulesWithoutCmModule.entrySet()) {
+                    Module module = entry.getKey();
+                    Collection<VirtualFile> af5ConfigXmlFiles = entry.getValue();
+                    CmModuleUtils.createCmModuleFile(module, af5ConfigXmlFiles, false);
                 }
                 notification.expire();
             }));
         }
 
-        for (Module module : modulesWithoutCmModule) {
+        for (Map.Entry<Module, Collection<VirtualFile>> entry : modulesWithoutCmModule.entrySet()) {
+            Module module = entry.getKey();
+            Collection<VirtualFile> af5ConfigXmlFiles = entry.getValue();
+
             NotificationAction action = NotificationAction.createSimple(module.getName(), () -> {
-                CmModuleUtils.createCmModuleFile(module, true);
+                CmModuleUtils.createCmModuleFile(module, af5ConfigXmlFiles, true);
                 updateNotification(notification);
             });
             notification.addAction(action);

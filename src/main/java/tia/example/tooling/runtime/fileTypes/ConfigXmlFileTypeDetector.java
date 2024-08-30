@@ -12,7 +12,7 @@ public class ConfigXmlFileTypeDetector implements FileTypeRegistry.FileTypeDetec
     @Nullable
     @Override
     public FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
-        if (firstCharsIfText == null) return null;
+        if (firstCharsIfText == null) return null; //"xml".equals(psiFile.getVirtualFile().getExtension())
         String str = firstCharsIfText.toString();
         if (!str.contains(ConfigXmlUtils.NS_AF5_CONFIG)) return null;
         return ConfigXmlFileType.INSTANCE;

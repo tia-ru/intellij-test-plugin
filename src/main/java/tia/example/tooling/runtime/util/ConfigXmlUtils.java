@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,8 +17,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.search.FileTypeIndex;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Processor;
 import com.intellij.util.xml.DomService;
 import com.intellij.util.xml.XmlFileHeader;
 import com.intellij.xdebugger.XSourcePosition;
@@ -29,6 +34,9 @@ import javax.annotation.Nullable;
 import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public final class ConfigXmlUtils {
 
@@ -47,6 +55,7 @@ public final class ConfigXmlUtils {
     public static final String TAG_INCLUDE_GROUP = "include-group";
     public static final String TAG_CONFIGURATION_PATHS = "configuration-paths";
     public static final String TAG_CONFIGURATION_PATH = "configuration-path";
+    public static final String TAG_CONFIGURATION_NAME = "name";
 
     public static final String ATTR_NAME = "name";
     public static final String ATTRIBUTE_ID = "id";
@@ -91,6 +100,51 @@ public final class ConfigXmlUtils {
     }
 
 
+    public static boolean isAF5ConfigRootTag(@NotNull XmlTag rootTag) {
+        return TAG_AF5_CONFIG_ROOT.equals(rootTag.getLocalName());
+    }
+
+    public static boolean hasAF5ConfigFiles(@Nullable Module module) {
+
+        GlobalSearchScope searchScope = GlobalSearchScope.moduleScope(module);
+        searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes(searchScope, XmlFileType.INSTANCE);
+        searchScope = searchScope.intersectWith(GlobalSearchScopesCore.projectProductionScope(module.getProject()));
+
+        boolean isAllFilesScanned = FileTypeIndex.processFiles(
+                XmlFileType.INSTANCE,
+                virtualFile -> !isAF5ConfigFile(virtualFile),
+                searchScope
+        );
+        return !isAllFilesScanned;
+        /*final Collection<VirtualFile> files = FileTypeIndex.getFiles(XmlFileType.INSTANCE, searchScope);
+
+        for (VirtualFile file : files) {
+            if (ConfigXmlUtils.isAF5ConfigFile(file)) {
+
+            }
+        }*/
+    }
+
+    public static Collection<VirtualFile> searchAF5ConfigFiles(@NotNull Module module) {
+        Set<VirtualFile> result = new HashSet<>(32);
+
+        GlobalSearchScope searchScope = module.getModuleScope(false);
+        //searchScope = searchScope.intersectWith(GlobalSearchScopesCore.projectProductionScope(module.getProject()));
+        //searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes(searchScope, XmlFileType.INSTANCE);
+        final Collection<VirtualFile> files = FileTypeIndex.getFiles(XmlFileType.INSTANCE, searchScope);
+
+        for (VirtualFile file : files) {
+            if (ConfigXmlUtils.isAF5ConfigFile(file)) {
+                result.add(file);
+            }
+        }
+        return result;
+    }
+
+    private static @NotNull Processor<? super VirtualFile> isAF5ConfigProcessor() {
+        return virtualFile -> !isAF5ConfigFile(virtualFile);
+    }
+
     private int readSafely(@NotNull InputStream stream, @NotNull byte[] buffer, int offset, int length) throws IOException {
         int n = stream.read(buffer, offset, length);
         if (n <= 0) {
@@ -99,10 +153,6 @@ public final class ConfigXmlUtils {
             n = ReadAction.compute(() -> stream.read(buffer, offset, length));
         }
         return n;
-    }
-
-    public static boolean isAF5ConfigRootTag(@Nonnull XmlTag rootTag) {
-        return TAG_AF5_CONFIG_ROOT.equals(rootTag.getLocalName());
     }
 
 

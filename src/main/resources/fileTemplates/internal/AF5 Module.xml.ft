@@ -3,6 +3,10 @@
     <name></name>
     <description></description>
 
+    <depends>
+        <depend>core</depend>
+    </depends>
+
     <configuration-paths>
         <configuration-path></configuration-path>
     </configuration-paths>

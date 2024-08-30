@@ -99,7 +99,7 @@ public class AF5ConfigIsNotRegisteredInCmModule  extends LocalInspectionTool {
             if (cmModuleFile == null) {
                 CmModuleUtils.createCmModuleFile(module, true);
             }
-            CmModuleUtils.addToCmModule(fileToRegister, project);
+            CmModuleUtils.addToCmModule(fileToRegister, module);
         }
     }
 

@@ -3,8 +3,6 @@ package tia.example.tooling.runtime.balloon;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.module.Module;
@@ -23,15 +21,11 @@ public class MyFileEditorManagerListener implements FileEditorManagerListener {
         Module module = ModuleUtil.findModuleForFile(file, project);
         if (module == null || CmModuleUtils.isRegistered(file, module)) return;
 
-        WriteCommandAction.Builder builder = WriteCommandAction.writeCommandAction(project)
-                .withName("Add file '" + file.getName() + "' to cm-module.xml")
-                .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION);
-
         String msg = "AF5 configuration file '" + file.getName() + "' is not registered in cm-module.xml";
-        Notification notification = new Notification("AF5", "AF5 Configuration", msg, NotificationType.INFORMATION, null);
+        Notification notification = new Notification("AF5", "AF5 Configuration", msg, NotificationType.INFORMATION);
         NotificationAction action = NotificationAction.createSimple("Add to cm-module.xml", () -> {
             notification.expire();
-            builder.run(()->CmModuleUtils.addToCmModule(file, project));
+            CmModuleUtils.addToCmModule(file, module);
         });
         notification.addAction(action);
         notification.notify(project);

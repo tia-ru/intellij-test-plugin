@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin require-restart="false" >
     <id>tia.test.af5-intellij</id>
     <name>AF5</name>
     <vendor email="support@example.com" url="http://www.example.com">Tugushev Ilya</vendor>
@@ -32,8 +32,9 @@
         <psi.referenceContributor language="JAVA"
                                   implementation="tia.example.tooling.runtime.reference.JavaPsiReferenceContributor"/>
 
-        <!--<fileTypeDetector implementation="tia.example.tooling.runtime.fileTypes.ConfigXmlFileTypeDetector" />
+        <!--<fileTypeDetector implementation="tia.example.tooling.runtime.fileTypes.ConfigXmlFileTypeDetector" order="first" />
         <fileType name="AF5 Config" implementationClass="tia.example.tooling.runtime.fileTypes.ConfigXmlFileType" fieldName="INSTANCE" language="af5-config"/>-->
+        <!--<fileTypeOverrider implementation=""-->
 
         <implicitUsageProvider implementation="tia.example.tooling.runtime.usage.Af5ImplicitUsageProvider" />
 

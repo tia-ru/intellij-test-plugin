@@ -3,6 +3,8 @@ package tia.example.tooling.runtime.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.CreateFileFromTemplateAction;
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -43,7 +45,8 @@ public class CreateDopFileAction extends CreateFileFromTemplateAction implements
     @Override
     protected PsiFile createFile(String name, String templateName, PsiDirectory dir) {
         PsiFile file = super.createFile(name, templateName, dir);
-        CmModuleUtils.addToCmModule(file.getVirtualFile(), file.getProject());
+        Module module = ModuleUtil.findModuleForFile(file.getVirtualFile(), file.getProject());
+        CmModuleUtils.addToCmModule(file.getVirtualFile(), module);
         return file;
     }
 
