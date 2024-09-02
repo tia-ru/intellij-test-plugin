@@ -111,14 +111,17 @@ public final class CmModuleUtils {
         return (XmlFile) psiFile;
     }
     public static PsiFile createCmModuleFile(Module module, boolean openFile){
-        final FileTemplate template = FileTemplateManager.getInstance(module.getProject()).getInternalTemplate(Af5FilesTemplateManager.AF_MODULE_FILE);
-        if (template == null) return null;
+        try {
+            final FileTemplate template = FileTemplateManager.getInstance(module.getProject()).getInternalTemplate(Af5FilesTemplateManager.AF_MODULE_FILE);
 
-        PsiDirectory rootDir = getResourceRoot(module);
-        if (rootDir == null) return null;
+            PsiDirectory rootDir = selectResourceRoot(module);
+            if (rootDir == null) return null;
 
-        PsiFile cmModuleFile = CreateFileFromTemplateAction.createFileFromTemplate(CmModuleUtils.CM_MODULE_XML_PATH, template, rootDir, null, openFile);
-        return cmModuleFile;
+            PsiFile cmModuleFile = CreateFileFromTemplateAction.createFileFromTemplate(CmModuleUtils.CM_MODULE_XML_PATH, template, rootDir, null, openFile);
+            return cmModuleFile;
+        } catch (com.intellij.util.IncorrectOperationException e) {
+            return null;
+        }
     }
 
     public static PsiFile createCmModuleFile(Module module, Collection<VirtualFile> af5ConfigXmlFiles, boolean openFile){
@@ -166,7 +169,7 @@ public final class CmModuleUtils {
         WriteCommandAction.writeCommandAction(xml)
                 .withName("Add file '" + virtualFile.getName() + "' to cm-module.xml")
                 .run(() -> {
-                    setPath(virtualFile, rootTag, project);
+                    setPath(virtualFile, rootTag, module);
 
                     XmlTag nameTag = rootTag.findFirstSubTag(ConfigXmlUtils.TAG_CONFIGURATION_NAME);
                     if (nameTag == null) return;
@@ -174,7 +177,7 @@ public final class CmModuleUtils {
                 });
     }
 
-    private static void setPath(VirtualFile af5ConfigFile, XmlTag rootTag, Project project) {
+    private static void setPath(VirtualFile af5ConfigFile, XmlTag rootTag, Module module) {
         XmlTag[] subTags = rootTag.findSubTags(ConfigXmlUtils.TAG_CONFIGURATION_PATHS, ConfigXmlUtils.NS_AF5_MODULE);
         XmlTag configPaths;
         if (subTags.length == 0) {
@@ -189,9 +192,16 @@ public final class CmModuleUtils {
         //String body = IfsUtil.getReferencePath(project, file.getVirtualFile());
         //body = body.substring(1);
 
-        ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+        ProjectRootManager projectRootManager = ProjectRootManager.getInstance(module.getProject());
         VirtualFile sourceRootForFile = projectRootManager.getFileIndex().getSourceRootForFile(af5ConfigFile);
-        String body = VfsUtilCore.findRelativePath(sourceRootForFile, af5ConfigFile, '/');
+
+        ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+        List<VirtualFile> resourceRoots = rootManager.getSourceRoots(JavaResourceRootType.RESOURCE);
+        String body = null;
+        for (VirtualFile root : resourceRoots) {
+            body = VfsUtilCore.findRelativePath(root, af5ConfigFile, '/');
+            if (body != null) break;
+        }
 
         XmlTag[] paths = configPaths.findSubTags(ConfigXmlUtils.TAG_CONFIGURATION_PATH, ConfigXmlUtils.NS_AF5_MODULE);
 
@@ -216,12 +226,20 @@ public final class CmModuleUtils {
 
         if (virtualFile == null) return false;
 
+        /*
         Project project = module.getProject();
         ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-
         VirtualFile sourceRootForFile = projectRootManager.getFileIndex().getSourceRootForFile(virtualFile);
-        if (sourceRootForFile == null) return false;
-        String body = VfsUtilCore.findRelativePath(sourceRootForFile, virtualFile, '/');
+        if (sourceRootForFile == null) return false;*/
+
+        ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+        List<VirtualFile> resourceRoots = rootManager.getSourceRoots(JavaResourceRootType.RESOURCE);
+        String body = null;
+        for (VirtualFile root : resourceRoots) {
+            body = VfsUtilCore.findRelativePath(root, virtualFile, '/');
+            if (body != null) break;
+        }
+        if (body == null) return false;
 
         //Module module = ModuleUtil.findModuleForFile(virtualFile, project);
         //if (module == null) return false;
@@ -231,7 +249,8 @@ public final class CmModuleUtils {
         Set<String> registeredFiles = cache.get(cmModuleXml, null).getValue();
         return registeredFiles.contains(body.toLowerCase());
     }
-    private static PsiDirectory getResourceRoot(Module module) {
+
+    private static PsiDirectory selectResourceRoot(Module module) {
 
         PsiDirectory psiDirectory = null;
 

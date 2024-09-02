@@ -17,6 +17,7 @@ import ru.intertrust.af5.idea.util.CmModuleUtils;
 import ru.intertrust.af5.idea.util.ConfigXmlUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class AF5ConfigIsNotRegisteredInCmModule  extends LocalInspectionTool {
@@ -26,6 +27,7 @@ public class AF5ConfigIsNotRegisteredInCmModule  extends LocalInspectionTool {
             @NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
 
         boolean isAf5ConfigFile = ConfigXmlUtils.isAF5ConfigFile(file);
+        if (!isAf5ConfigFile) return null;
 
         Project project = file.getProject();
         VirtualFile virtualFile = file.getVirtualFile();
@@ -35,7 +37,7 @@ public class AF5ConfigIsNotRegisteredInCmModule  extends LocalInspectionTool {
         Module module = ModuleUtil.findModuleForFile(virtualFile, project);
         if (module == null) return null;
 
-        List<? super ProblemDescriptor> result = new ArrayList<>(2);
+        List<ProblemDescriptor> result = new ArrayList<>(2);
 
         VirtualFile cmModuleFile = CmModuleUtils.getCmModuleFile(module);
         if (cmModuleFile == null) {
@@ -54,7 +56,6 @@ public class AF5ConfigIsNotRegisteredInCmModule  extends LocalInspectionTool {
             notification.notify(project);
         }*/
 
-        if (!isAf5ConfigFile) return null;
 
         if (!CmModuleUtils.isRegistered(virtualFile, module)) {
             //PsiElement child = file.getFirstChild().getChildren()[0];
@@ -97,9 +98,10 @@ public class AF5ConfigIsNotRegisteredInCmModule  extends LocalInspectionTool {
             Module module = ModuleUtil.findModuleForFile(fileToRegister, project);
             VirtualFile cmModuleFile = CmModuleUtils.getCmModuleFile(module);
             if (cmModuleFile == null) {
-                CmModuleUtils.createCmModuleFile(module, true);
+                CmModuleUtils.createCmModuleFile(module, Collections.singleton(fileToRegister), true);
+            } else {
+                CmModuleUtils.addToCmModule(fileToRegister, module);
             }
-            CmModuleUtils.addToCmModule(fileToRegister, module);
         }
     }
 
