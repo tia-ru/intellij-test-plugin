@@ -41,7 +41,8 @@ public class AF5ConfigurationCheckStartupActivity implements ProjectActivity {
         if (!application.isUnitTestMode() && !application.isHeadlessEnvironment()) {
             ReadAction.nonBlocking(new RunnableCallable(() -> {
                         //if (!DetectionExcludesConfiguration.getInstance(project).isExcludedFromDetection(SpringFrameworkDetector.getSpringFrameworkType())) {
-                        if (ProjectInspectionProfileManager.getInstance(project).isCurrentProfileInitialized()) {
+                        //if (ProjectInspectionProfileManager.getInstance(project).isCurrentProfileInitialized()) {
+                        if (ProjectInspectionProfileManager.getInstance(project).getCurrentProfile().wasInitialized()) {
                             queueSmartTask(project);
                         } else {
                             project.getMessageBus().connect().subscribe(ProfileChangeAdapter.TOPIC, new ProfileChangeAdapter() {

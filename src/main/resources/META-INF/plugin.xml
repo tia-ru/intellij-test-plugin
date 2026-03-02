@@ -1,4 +1,4 @@
-<idea-plugin require-restart="false" package="ru.intertrust.af5.idea">
+<idea-plugin require-restart="false">
     <id>ru.intertrust.af5.idea</id>
     <name>AF5</name>
     <vendor email="support@example.com" url="http://www.example.com">Tugushev Ilya</vendor>

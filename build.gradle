@@ -1,12 +1,13 @@
 plugins {
     id 'java'
     //id 'org.jetbrains.intellij' version '0.4.16'
-    id 'org.jetbrains.intellij.platform' version '2.0.1'
+    //id 'org.jetbrains.intellij.platform' version '2.3.0'
+    id 'org.jetbrains.intellij.platform' version '2.11.0'
     /*id("org.jetbrains.intellij.platform.migration") version "2.0.1"*/
 }
 
-group 'io.github.tia-ru'
-version '1.1'
+group = 'io.github.tia-ru'
+version = '1.2'
 
 repositories {
     mavenCentral()
@@ -19,7 +20,8 @@ dependencies {
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
     //testImplementation 'junit:junit:4.12'
     intellijPlatform {
-        intellijIdeaCommunity('2023.1')
+        //intellijIdeaCommunity('2025.3.1.1')
+        intellijIdea('2025.3.1.1')
 
         bundledPlugin 'com.intellij.java'
         bundledPlugin 'com.intellij.properties'
@@ -63,7 +65,7 @@ intellijPlatform {
         ideaVersion {
             //sinceBuild 'IC-192'
             //sinceBuild '223.7571.182'
-            sinceBuild = '231'
+            sinceBuild = '253'
             untilBuild = provider { null }
         }
     }
